@@ -149,7 +149,8 @@ const CommercialProposal = () => {
         markup
       );
       
-      if (proposal) {
+      // Fix: Check if proposal is truthy rather than testing void for truthiness
+      if (proposal !== undefined && proposal !== null) {
         setIsProposalCreated(true);
         toast({
           title: 'Proposal Created',

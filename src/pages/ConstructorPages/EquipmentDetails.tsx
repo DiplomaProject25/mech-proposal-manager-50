@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, PackageCheck, MapPin, AlertTriangle, Tools, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, PackageCheck, MapPin, AlertTriangle, Wrench, ShoppingCart } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,7 +34,6 @@ const EquipmentDetails = () => {
   useEffect(() => {
     if (!order || !order.commercialProposal) return;
     
-    // Get detailed info for each part including availability
     const parts = order.commercialProposal.equipment.map(part => {
       const currentPart = getEquipmentByArticle(part.articleNumber);
       return {
@@ -91,7 +89,6 @@ const EquipmentDetails = () => {
   const handleAssemblyOrder = () => {
     if (!orderId) return;
     
-    // Check if we have all parts
     const allPartsAvailable = partsInfo.every(info => info.hasEnough);
     
     if (!allPartsAvailable) {
@@ -103,7 +100,6 @@ const EquipmentDetails = () => {
       return;
     }
     
-    // Update inventory
     const equipmentIds = partsInfo.map(info => info.part.id);
     const quantities = partsInfo.map(info => info.part.quantity);
     
@@ -127,7 +123,6 @@ const EquipmentDetails = () => {
     });
   };
   
-  // Determine if all parts are available
   const allPartsAvailable = partsInfo.length > 0 && partsInfo.every(info => info.hasEnough);
   const somePartsAvailable = partsInfo.some(info => info.hasEnough);
   
@@ -293,7 +288,7 @@ const EquipmentDetails = () => {
                       disabled={!allPartsAvailable}
                       className="flex items-center"
                     >
-                      <Tools className="mr-2 h-4 w-4" />
+                      <Wrench className="mr-2 h-4 w-4" />
                       Start Assembly
                     </Button>
                   </div>
