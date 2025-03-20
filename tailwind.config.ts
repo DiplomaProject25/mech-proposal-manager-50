@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				status: {
+					pending: '#FFC107',
+					approved: '#4CAF50',
+					rejected: '#F44336',
+					inProgress: '#2196F3',
+					assembly: '#9C27B0',
+					purchasing: '#FF9800'
 				}
 			},
 			borderRadius: {
@@ -84,11 +93,34 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				fadeIn: {
+					from: { opacity: '0' },
+					to: { opacity: '1' }
+				},
+				slideIn: {
+					from: { transform: 'translateY(10px)' },
+					to: { transform: 'translateY(0)' }
+				},
+				pulse: {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.5' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				fadeIn: 'fadeIn 0.5s ease-out',
+				slideIn: 'slideIn 0.5s ease-out',
+				pulse: 'pulse 2s infinite'
+			},
+			backdropFilter: {
+				'none': 'none',
+				'blur': 'blur(8px)'
+			},
+			boxShadow: {
+				'neo': '5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.5)',
+				'glass': '0 4px 30px rgba(0, 0, 0, 0.1)'
 			}
 		}
 	},

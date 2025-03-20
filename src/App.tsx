@@ -1,25 +1,131 @@
+
+import React, { useEffect, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { OrderProvider } from './context/OrderContext';
+
+// Import components
+import Sidebar from './components/layout/Sidebar';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Orders from './pages/Orders';
+import NotFound from './pages/NotFound';
+import CommercialProposal from './pages/DirectorPages/CommercialProposal';
+import OrderDetails from './pages/DirectorPages/OrderDetails';
+import ConstructorDashboard from './pages/ConstructorPages/ConstructorDashboard';
+import EquipmentDetails from './pages/ConstructorPages/EquipmentDetails';
+
+// Import framer-motion for page transitions
+import { AnimatePresence } from 'framer-motion';
 
 const queryClient = new QueryClient();
 
+// Route Guard component
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Layout component with sidebar
+const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return <>{children}</>;
+  }
+
+  return (
+    <div className="flex">
+      <Sidebar />
+      <div className="flex-1 ml-[250px]">
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// Main app component
+const AppContent = () => {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <AppLayout>
+        <Suspense fallback={<div>Loading...</div>}>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/login" element={<Login />} />
+            
+            {/* Protected Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/orders" element={
+              <ProtectedRoute>
+                <Orders />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/orders/:orderId" element={
+              <ProtectedRoute>
+                <OrderDetails />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/proposals/create/:orderId" element={
+              <ProtectedRoute>
+                <CommercialProposal />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/equipment/order/:orderId" element={
+              <ProtectedRoute>
+                <EquipmentDetails />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </AppLayout>
+    </AnimatePresence>
+  );
+};
+
+// Main App with providers
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <OrderProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </OrderProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

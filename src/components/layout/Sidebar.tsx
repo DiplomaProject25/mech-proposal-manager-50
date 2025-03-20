@@ -1,0 +1,158 @@
+
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  ClipboardList, 
+  FileText, 
+  Home, 
+  Wrench, 
+  Package, 
+  LogOut, Minimize2, Maximize2 
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useAuth, UserRole } from '@/context/AuthContext';
+
+const Sidebar = () => {
+  const { user, logout, isDirector, isConstructor } = useAuth();
+  const location = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
+
+  if (!user) return null;
+
+  const toggleCollapse = () => {
+    setCollapsed(prev => !prev);
+  };
+
+  const menuItems = [
+    {
+      title: 'Dashboard',
+      icon: <Home size={20} />,
+      href: '/dashboard',
+      forRoles: [UserRole.DIRECTOR, UserRole.CONSTRUCTOR],
+    },
+    {
+      title: 'Orders',
+      icon: <ClipboardList size={20} />,
+      href: '/orders',
+      forRoles: [UserRole.DIRECTOR, UserRole.CONSTRUCTOR],
+    },
+    {
+      title: 'Proposals',
+      icon: <FileText size={20} />,
+      href: '/proposals',
+      forRoles: [UserRole.DIRECTOR],
+    },
+    {
+      title: 'Equipment',
+      icon: <Package size={20} />,
+      href: '/equipment',
+      forRoles: [UserRole.CONSTRUCTOR],
+    },
+    {
+      title: 'Workshop',
+      icon: <Wrench size={20} />,
+      href: '/workshop',
+      forRoles: [UserRole.CONSTRUCTOR],
+    },
+  ];
+
+  const sidebarVariants = {
+    expanded: { width: 250 },
+    collapsed: { width: 70 }
+  };
+
+  return (
+    <motion.div
+      variants={sidebarVariants}
+      initial="expanded"
+      animate={collapsed ? 'collapsed' : 'expanded'}
+      transition={{ duration: 0.3 }}
+      className="bg-sidebar shadow-lg h-screen fixed left-0 top-0 z-10 flex flex-col border-r border-gray-200"
+    >
+      <div className="p-4 flex items-center justify-between border-b border-gray-200">
+        <AnimatePresence>
+          {!collapsed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="font-semibold text-lg"
+            >
+              MechERP
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <button 
+          onClick={toggleCollapse}
+          className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+        >
+          {collapsed ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
+        </button>
+      </div>
+
+      <div className="flex-1 py-4 overflow-y-auto">
+        <nav className="space-y-1 px-2">
+          {menuItems.map((item) => {
+            // Check if the current user has permission to see this item
+            if (!item.forRoles.includes(user.role)) return null;
+
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex items-center p-2 rounded-lg transition-all duration-200",
+                  location.pathname === item.href
+                    ? "bg-blue-500 text-white"
+                    : "hover:bg-gray-200"
+                )}
+              >
+                <span className="flex items-center justify-center">
+                  {item.icon}
+                </span>
+                <AnimatePresence>
+                  {!collapsed && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="ml-3"
+                    >
+                      {item.title}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      <div className="p-4 border-t border-gray-200">
+        <button
+          onClick={logout}
+          className="flex items-center w-full p-2 rounded-lg hover:bg-gray-200 transition-all duration-200"
+        >
+          <span className="flex items-center justify-center">
+            <LogOut size={20} />
+          </span>
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="ml-3"
+              >
+                Logout
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
+export default Sidebar;
