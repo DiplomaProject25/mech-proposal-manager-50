@@ -15,6 +15,7 @@ import { useOrders, OrderStatus } from '@/context/OrderContext';
 import { useAuth, UserRole } from '@/context/AuthContext';
 import Header from '@/components/layout/Header';
 import OrderCard from '@/components/common/OrderCard';
+import NewOrderDialog from '@/components/common/NewOrderDialog';
 
 const Orders = () => {
   const { filteredOrders } = useOrders();
@@ -22,6 +23,7 @@ const Orders = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [isNewOrderDialogOpen, setIsNewOrderDialogOpen] = useState(false);
   
   // Filter and search orders
   const filteredAndSearchedOrders = filteredOrders.filter(order => {
@@ -40,6 +42,14 @@ const Orders = () => {
       order.description.toLowerCase().includes(searchTerms)
     );
   });
+
+  const handleOpenNewOrderDialog = () => {
+    setIsNewOrderDialogOpen(true);
+  };
+
+  const handleCloseNewOrderDialog = () => {
+    setIsNewOrderDialogOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -84,7 +94,10 @@ const Orders = () => {
           </div>
           
           {user?.role === UserRole.DIRECTOR && (
-            <Button className="flex items-center whitespace-nowrap">
+            <Button 
+              className="flex items-center whitespace-nowrap"
+              onClick={handleOpenNewOrderDialog}
+            >
               <Plus className="mr-2 h-4 w-4" />
               New Order
             </Button>
@@ -125,6 +138,12 @@ const Orders = () => {
           </motion.div>
         )}
       </main>
+
+      {/* New Order Dialog */}
+      <NewOrderDialog 
+        isOpen={isNewOrderDialogOpen} 
+        onClose={handleCloseNewOrderDialog} 
+      />
     </div>
   );
 };
