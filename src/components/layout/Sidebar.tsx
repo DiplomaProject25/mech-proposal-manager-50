@@ -8,7 +8,11 @@ import {
   Home, 
   Wrench, 
   Package, 
-  LogOut, Minimize2, Maximize2 
+  Settings as SettingsIcon,
+  LogOut, 
+  Minimize2, 
+  Maximize2,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth, UserRole } from '@/context/AuthContext';
@@ -127,6 +131,60 @@ const Sidebar = () => {
             );
           })}
         </nav>
+      </div>
+
+      <div className="py-2 px-2 border-t border-gray-200">
+        <Link
+          to="/profile"
+          className={cn(
+            "flex items-center p-2 rounded-lg transition-all duration-200",
+            location.pathname === '/profile'
+              ? "bg-blue-500 text-white"
+              : "hover:bg-gray-200"
+          )}
+        >
+          <span className="flex items-center justify-center">
+            <User size={20} />
+          </span>
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="ml-3"
+              >
+                Profile
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </Link>
+        
+        <Link
+          to="/settings"
+          className={cn(
+            "flex items-center p-2 rounded-lg transition-all duration-200",
+            location.pathname === '/settings'
+              ? "bg-blue-500 text-white"
+              : "hover:bg-gray-200"
+          )}
+        >
+          <span className="flex items-center justify-center">
+            <SettingsIcon size={20} />
+          </span>
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="ml-3"
+              >
+                Settings
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </Link>
       </div>
 
       <div className="p-4 border-t border-gray-200">

@@ -18,6 +18,10 @@ import CommercialProposal from './pages/DirectorPages/CommercialProposal';
 import OrderDetails from './pages/DirectorPages/OrderDetails';
 import ConstructorDashboard from './pages/ConstructorPages/ConstructorDashboard';
 import EquipmentDetails from './pages/ConstructorPages/EquipmentDetails';
+import Equipment from './pages/ConstructorPages/Equipment';
+import Workshop from './pages/ConstructorPages/Workshop';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 
 // Import framer-motion for page transitions
 import { AnimatePresence } from 'framer-motion';
@@ -101,6 +105,31 @@ const AppContent = () => {
             <Route path="/equipment/order/:orderId" element={
               <ProtectedRoute>
                 <EquipmentDetails />
+              </ProtectedRoute>
+            } />
+            
+            {/* New routes for Equipment, Workshop, Profile, and Settings */}
+            <Route path="/equipment" element={
+              <ProtectedRoute>
+                <Equipment />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/workshop" element={
+              <ProtectedRoute>
+                <Workshop />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             } />
             
