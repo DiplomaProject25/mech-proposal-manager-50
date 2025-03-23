@@ -16,6 +16,7 @@ import Orders from './pages/Orders';
 import NotFound from './pages/NotFound';
 import CommercialProposal from './pages/DirectorPages/CommercialProposal';
 import OrderDetails from './pages/DirectorPages/OrderDetails';
+import Proposals from './pages/DirectorPages/Proposals';
 import ConstructorDashboard from './pages/ConstructorPages/ConstructorDashboard';
 import EquipmentDetails from './pages/ConstructorPages/EquipmentDetails';
 import Equipment from './pages/ConstructorPages/Equipment';
@@ -93,6 +94,12 @@ const AppContent = () => {
             <Route path="/orders/:orderId" element={
               <ProtectedRoute>
                 <OrderDetails />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/proposals" element={
+              <ProtectedRoute>
+                <Proposals />
               </ProtectedRoute>
             } />
             
