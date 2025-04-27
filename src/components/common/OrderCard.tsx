@@ -53,7 +53,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order }) => {
             <div className="flex items-center text-sm text-gray-500">
               <User className="h-4 w-4 mr-2" />
               <span>
-                {order.assignedTo ? 'Assigned' : 'Unassigned'}
+                {order.responsibleEmployee 
+                  ? `Ответственный: ${order.responsibleEmployee}`
+                  : 'Ответственный не назначен'}
               </span>
             </div>
             
@@ -67,7 +69,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order }) => {
             <div className="flex items-center text-sm text-gray-500">
               <ClipboardList className="h-4 w-4 mr-2" />
               <span>
-                {order.commercialProposal ? 'Has proposal' : 'No proposal yet'}
+                {order.commercialProposal ? 'Есть предложение' : 'Нет предложения'}
               </span>
             </div>
           </div>
@@ -78,7 +80,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order }) => {
             onClick={handleClick}
             className="w-full bg-blue-500 hover:bg-blue-600 text-white"
           >
-            View Details
+            Просмотр деталей
           </Button>
         </CardFooter>
       </Card>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Package, Plus, Minus, Trash2, Calculator, Save, Download } from 'lucide-react';
+import { Package, Plus, Minus, Trash2, Calculator, Save, Download, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,13 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useOrders, EquipmentPart } from '@/context/OrderContext';
 import Header from '@/components/layout/Header';
 
@@ -25,7 +32,9 @@ const CommercialProposal = () => {
     getOrderById, 
     getAllEquipment, 
     createCommercialProposal,
-    downloadProposalAsTxt
+    downloadProposalAsTxt,
+    downloadProposalAsWord,
+    getEmployeeList
   } = useOrders();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -38,8 +47,10 @@ const CommercialProposal = () => {
   const [filteredEquipment, setFilteredEquipment] = useState<EquipmentPart[]>([]);
   const [isProposalCreated, setIsProposalCreated] = useState<boolean>(false);
   const [calculationDone, setCalculationDone] = useState<boolean>(false);
+  const [responsibleEmployee, setResponsibleEmployee] = useState<string>('');
   
   const allEquipment = getAllEquipment();
+  const employees = getEmployeeList();
 
   useEffect(() => {
     if (!orderId) return;
@@ -47,8 +58,8 @@ const CommercialProposal = () => {
     const order = getOrderById(orderId);
     if (!order) {
       toast({
-        title: 'Order not found',
-        description: 'The order you are looking for does not exist',
+        title: 'Заказ не найден',
+        description: 'Запрашиваемый заказ не существует',
         variant: 'destructive',
       });
       navigate('/orders');
@@ -62,6 +73,13 @@ const CommercialProposal = () => {
       setTotal(order.commercialProposal.totalCost);
       setIsProposalCreated(true);
       setCalculationDone(true);
+      if (order.commercialProposal.responsibleEmployee) {
+        setResponsibleEmployee(order.commercialProposal.responsibleEmployee);
+      }
+    }
+    
+    if (order.responsibleEmployee) {
+      setResponsibleEmployee(order.responsibleEmployee);
     }
   }, [orderId, getOrderById, navigate, toast]);
   
@@ -134,8 +152,8 @@ const CommercialProposal = () => {
     setCalculationDone(true);
     
     toast({
-      title: 'Calculation Complete',
-      description: 'The proposal has been calculated successfully',
+      title: 'Расчет выполнен',
+      description: 'Предложение успешно рассчитано',
     });
   };
 
@@ -146,34 +164,51 @@ const CommercialProposal = () => {
       const proposal = await createCommercialProposal(
         orderId,
         selectedEquipment,
-        markup
+        markup,
+        responsibleEmployee
       );
       
       // Fix: Check if proposal is truthy rather than testing void for truthiness
       if (proposal !== undefined && proposal !== null) {
         setIsProposalCreated(true);
         toast({
-          title: 'Proposal Created',
-          description: 'The commercial proposal has been created successfully',
+          title: 'Предложение создано',
+          description: 'Коммерческое предложение успешно создано',
         });
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to create commercial proposal',
+        title: 'Ошибка',
+        description: 'Не удалось создать коммерческое предложение',
         variant: 'destructive',
       });
     }
   };
 
-  const handleDownloadProposal = () => {
+  const handleDownloadProposalAsWord = () => {
     if (!orderId) return;
     
     const order = getOrderById(orderId);
     if (!order || !order.commercialProposal) {
       toast({
-        title: 'Proposal not found',
-        description: 'No proposal exists for this order',
+        title: 'Предложение не найдено',
+        description: 'Для данного заказа не существует предложения',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    downloadProposalAsWord(order.commercialProposal.id);
+  };
+
+  const handleDownloadProposalAsTxt = () => {
+    if (!orderId) return;
+    
+    const order = getOrderById(orderId);
+    if (!order || !order.commercialProposal) {
+      toast({
+        title: 'Предложение не найдено',
+        description: 'Для данного заказа не существует предложения',
         variant: 'destructive',
       });
       return;
@@ -184,7 +219,7 @@ const CommercialProposal = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header title="Create Commercial Proposal" />
+      <Header title="Создать коммерческое предложение" />
       
       <main className="container mx-auto px-4 py-8">
         <motion.div
@@ -199,14 +234,14 @@ const CommercialProposal = () => {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Package className="mr-2 h-5 w-5" />
-                  Equipment Catalog
+                  Каталог оборудования
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="mb-4">
                   <Input
                     type="text"
-                    placeholder="Search by name or article number..."
+                    placeholder="Поиск по названию или артикулу..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full"
@@ -216,7 +251,7 @@ const CommercialProposal = () => {
                 <div className="h-[500px] overflow-y-auto pr-2">
                   {filteredEquipment.length === 0 ? (
                     <div className="text-center text-gray-500 mt-8">
-                      No equipment found
+                      Оборудование не найдено
                     </div>
                   ) : (
                     <ul className="space-y-2">
@@ -257,45 +292,68 @@ const CommercialProposal = () => {
           <div className="md:col-span-2">
             <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Proposal Details</CardTitle>
+                <CardTitle>Детали предложения</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="mb-6">
-                  <Label htmlFor="markup" className="mb-2 block">
-                    Markup Percentage (%)
-                  </Label>
-                  <Input
-                    id="markup"
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={markup}
-                    onChange={(e) => {
-                      setMarkup(Number(e.target.value));
-                      setCalculationDone(false);
-                    }}
-                    className="w-full max-w-xs"
-                    disabled={isProposalCreated}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <Label htmlFor="markup" className="mb-2 block">
+                      Процент наценки (%)
+                    </Label>
+                    <Input
+                      id="markup"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={markup}
+                      onChange={(e) => {
+                        setMarkup(Number(e.target.value));
+                        setCalculationDone(false);
+                      }}
+                      className="w-full"
+                      disabled={isProposalCreated}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="employee" className="mb-2 block">
+                      Ответственный сотрудник
+                    </Label>
+                    <Select
+                      value={responsibleEmployee}
+                      onValueChange={(value) => setResponsibleEmployee(value)}
+                      disabled={isProposalCreated}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Выберите сотрудника" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {employees.map((employee) => (
+                          <SelectItem key={employee} value={employee}>
+                            {employee}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 
                 <div className="mb-6">
-                  <h3 className="text-lg font-medium mb-3">Selected Equipment</h3>
+                  <h3 className="text-lg font-medium mb-3">Выбранное оборудование</h3>
                   
                   {selectedEquipment.length === 0 ? (
                     <div className="text-center py-8 border rounded-lg border-dashed border-gray-300">
                       <p className="text-gray-500">
-                        No equipment added to the proposal yet
+                        В предложение еще не добавлено оборудование
                       </p>
                     </div>
                   ) : (
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Item</TableHead>
-                          <TableHead>Price</TableHead>
-                          <TableHead>Quantity</TableHead>
-                          <TableHead>Subtotal</TableHead>
+                          <TableHead>Товар</TableHead>
+                          <TableHead>Цена</TableHead>
+                          <TableHead>Количество</TableHead>
+                          <TableHead>Подытог</TableHead>
                           <TableHead></TableHead>
                         </TableRow>
                       </TableHeader>
@@ -363,18 +421,22 @@ const CommercialProposal = () => {
                 
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between mb-2">
-                    <span className="font-medium">Subtotal:</span>
+                    <span className="font-medium">Подытог без НДС:</span>
                     <span>${subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between mb-2">
                     <span className="font-medium">
-                      Markup ({markup}%):
+                      Наценка ({markup}%):
                     </span>
                     <span>${(subtotal * markup / 100).toFixed(2)}</span>
                   </div>
+                  <div className="flex justify-between mb-2">
+                    <span className="font-medium">НДС (20%):</span>
+                    <span>${(subtotal * (1 + markup / 100) * 0.2).toFixed(2)}</span>
+                  </div>
                   <div className="flex justify-between text-lg font-bold">
-                    <span>Total:</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>Итого с НДС:</span>
+                    <span>${(total * 1.2).toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -384,18 +446,29 @@ const CommercialProposal = () => {
                     variant="outline"
                     onClick={() => navigate(`/orders/${orderId}`)}
                   >
-                    Back
+                    Назад
                   </Button>
                   
                   {isProposalCreated && (
-                    <Button
-                      variant="outline"
-                      onClick={handleDownloadProposal}
-                      className="flex items-center"
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Proposal
-                    </Button>
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={handleDownloadProposalAsTxt}
+                        className="flex items-center"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Скачать в TXT
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        onClick={handleDownloadProposalAsWord}
+                        className="flex items-center"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Скачать в Word
+                      </Button>
+                    </>
                   )}
                 </div>
                 
@@ -409,16 +482,16 @@ const CommercialProposal = () => {
                         className="flex items-center"
                       >
                         <Calculator className="mr-2 h-4 w-4" />
-                        Calculate
+                        Рассчитать
                       </Button>
                       
                       <Button
                         onClick={handleCreateProposal}
-                        disabled={!calculationDone || selectedEquipment.length === 0}
+                        disabled={!calculationDone || selectedEquipment.length === 0 || !responsibleEmployee}
                         className="flex items-center"
                       >
                         <Save className="mr-2 h-4 w-4" />
-                        Create Proposal
+                        Создать предложение
                       </Button>
                     </>
                   )}

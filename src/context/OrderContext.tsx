@@ -5,14 +5,14 @@ import { useAuth, UserRole } from './AuthContext';
 
 // Define order status types
 export enum OrderStatus {
-  NEW = 'new',
-  PROPOSAL_CREATED = 'proposal_created',
-  REJECTED = 'rejected',
-  READY_FOR_DEVELOPMENT = 'ready_for_development',
-  IN_PROGRESS = 'in_progress',
-  ASSEMBLY = 'assembly',
-  PURCHASING = 'purchasing',
-  COMPLETED = 'completed'
+  NEW = 'новый',
+  PROPOSAL_CREATED = 'предложение_создано',
+  REJECTED = 'отклонен',
+  READY_FOR_DEVELOPMENT = 'готов_к_разработке',
+  IN_PROGRESS = 'в_процессе',
+  ASSEMBLY = 'сборка',
+  PURCHASING = 'закупка',
+  COMPLETED = 'завершен'
 }
 
 // Equipment/parts interface
@@ -34,6 +34,7 @@ export interface CommercialProposal {
   markup: number; // percentage
   totalCost: number;
   createdAt: Date;
+  responsibleEmployee?: string; // Name of the responsible employee
 }
 
 // Order interface
@@ -43,6 +44,7 @@ export interface Order {
   description: string;
   status: OrderStatus;
   assignedTo: string | null; // User ID of constructor assigned to the order
+  responsibleEmployee: string | null; // Name of the responsible employee
   commercialProposal: CommercialProposal | null;
   createdAt: Date;
   updatedAt: Date;
@@ -56,14 +58,18 @@ interface OrderContextType {
   setCurrentOrder: (order: Order | null) => void;
   loading: boolean;
   error: string | null;
-  createOrder: (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTo' | 'commercialProposal'>) => void;
+  createOrder: (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTo' | 'commercialProposal' | 'responsibleEmployee'>) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus, assignTo?: string | null) => void;
-  createCommercialProposal: (orderId: string, equipment: EquipmentPart[], markup: number) => void;
+  createCommercialProposal: (orderId: string, equipment: EquipmentPart[], markup: number, responsibleEmployee?: string) => void;
   getOrderById: (id: string) => Order | null;
   getAllEquipment: () => EquipmentPart[];
   getEquipmentByArticle: (articleNumber: string) => EquipmentPart | null;
   updateEquipmentInventory: (equipmentIds: string[], quantities: number[]) => void;
   downloadProposalAsTxt: (proposalId: string) => void;
+  downloadProposalAsWord: (proposalId: string) => void;
+  assignResponsibleEmployee: (orderId: string, employeeName: string) => void;
+  addNewEquipment: (equipment: Omit<EquipmentPart, 'id'>) => void;
+  getEmployeeList: () => string[];
 }
 
 // Create context
@@ -73,93 +79,115 @@ const OrderContext = createContext<OrderContextType | undefined>(undefined);
 const MOCK_EQUIPMENT: EquipmentPart[] = [
   {
     id: 'e1',
-    name: 'Hydraulic Pump',
+    name: 'Гидравлический насос',
     articleNumber: 'HP-2023',
     price: 1200,
     quantity: 1,
     availableQuantity: 5,
-    location: 'Section A, Shelf 3'
+    location: 'Секция A, Полка 3'
   },
   {
     id: 'e2',
-    name: 'Control Valve',
+    name: 'Управляющий клапан',
     articleNumber: 'CV-4056',
     price: 450,
     quantity: 2,
     availableQuantity: 12,
-    location: 'Section B, Shelf 1'
+    location: 'Секция B, Полка 1'
   },
   {
     id: 'e3',
-    name: 'Electric Motor',
+    name: 'Электродвигатель',
     articleNumber: 'EM-7890',
     price: 2500,
     quantity: 1,
     availableQuantity: 3,
-    location: 'Section C, Shelf 4'
+    location: 'Секция C, Полка 4'
   },
   {
     id: 'e4',
-    name: 'Pressure Gauge',
+    name: 'Манометр',
     articleNumber: 'PG-3421',
     price: 150,
     quantity: 4,
     availableQuantity: 20,
-    location: 'Section A, Shelf 2'
+    location: 'Секция A, Полка 2'
   },
   {
     id: 'e5',
-    name: 'Steel Frame',
+    name: 'Стальная рама',
     articleNumber: 'SF-1010',
     price: 850,
     quantity: 1,
     availableQuantity: 7,
-    location: 'Section D, Shelf 1'
+    location: 'Секция D, Полка 1'
   }
 ];
+
+// Employee list
+const EMPLOYEE_LIST = [
+  'Иванов И.И.',
+  'Петров П.П.',
+  'Сидоров С.С.',
+  'Смирнова А.В.',
+  'Кузнецов К.К.'
+];
+
+// Generate realistic order ID
+const generateOrderId = () => {
+  const year = new Date().getFullYear().toString().slice(-2);
+  const month = (new Date().getMonth() + 1).toString().padStart(2, '0');
+  const randomDigits = Math.floor(1000 + Math.random() * 9000);
+  return `ЗКЗ-${year}${month}-${randomDigits}`;
+};
 
 // Mock orders
 const MOCK_ORDERS: Order[] = [
   {
-    id: 'o1',
-    clientName: 'Acme Industries',
-    description: 'Industrial hydraulic system with pressure control',
+    id: 'ЗКЗ-2304-5782',
+    clientName: 'ООО "Акмэ Индастриз"',
+    description: 'Промышленная гидравлическая система с контролем давления',
     status: OrderStatus.NEW,
     assignedTo: null,
+    responsibleEmployee: 'Иванов И.И.',
     commercialProposal: null,
     createdAt: new Date(2023, 6, 15),
     updatedAt: new Date(2023, 6, 15)
   },
   {
-    id: 'o2',
-    clientName: 'Tech Solutions',
-    description: 'Automated assembly line components',
+    id: 'ЗКЗ-2305-8431',
+    clientName: 'ООО "Тех Солюшнс"',
+    description: 'Компоненты для автоматизированной сборочной линии',
     status: OrderStatus.PROPOSAL_CREATED,
     assignedTo: null,
+    responsibleEmployee: 'Петров П.П.',
     commercialProposal: {
       id: 'cp1',
-      orderId: 'o2',
+      orderId: 'ЗКЗ-2305-8431',
       equipment: [MOCK_EQUIPMENT[0], MOCK_EQUIPMENT[2]],
       markup: 15,
       totalCost: 4255, // (1200 + 2500) * 1.15
-      createdAt: new Date(2023, 6, 20)
+      createdAt: new Date(2023, 6, 20),
+      responsibleEmployee: 'Петров П.П.'
     },
     createdAt: new Date(2023, 6, 18),
     updatedAt: new Date(2023, 6, 20)
   },
   {
-    id: 'o3',
-    clientName: 'Global Manufacturing',
-    description: 'Custom CNC machine parts',
+    id: 'ЗКЗ-2306-1249',
+    clientName: 'АО "Глобал Мануфактуринг"',
+    description: 'Изготовление деталей для станков с ЧПУ',
     status: OrderStatus.READY_FOR_DEVELOPMENT,
     assignedTo: null,
+    responsibleEmployee: 'Сидоров С.С.',
     commercialProposal: {
       id: 'cp2',
-      orderId: 'o3',
+      orderId: 'ЗКЗ-2306-1249',
       equipment: [MOCK_EQUIPMENT[1], MOCK_EQUIPMENT[3], MOCK_EQUIPMENT[4]],
       markup: 20,
       totalCost: 1920, // (450*2 + 150*4 + 850) * 1.2
-      createdAt: new Date(2023, 6, 25)
+      createdAt: new Date(2023, 6, 25),
+      responsibleEmployee: 'Сидоров С.С.'
     },
     createdAt: new Date(2023, 6, 22),
     updatedAt: new Date(2023, 6, 26)
@@ -195,14 +223,17 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [orders, user]);
 
   // Create a new order
-  const createOrder = (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTo' | 'commercialProposal'>) => {
+  const createOrder = (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTo' | 'commercialProposal' | 'responsibleEmployee'>) => {
     setLoading(true);
     try {
+      const newOrderId = generateOrderId();
+      
       const newOrder: Order = {
-        id: `o${orders.length + 1}`,
+        id: newOrderId,
         ...orderData,
         status: OrderStatus.NEW,
         assignedTo: null,
+        responsibleEmployee: null,
         commercialProposal: null,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -211,14 +242,14 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setOrders(prevOrders => [...prevOrders, newOrder]);
       
       toast({
-        title: 'Order Created',
-        description: `New order for ${orderData.clientName} has been created`,
+        title: 'Заказ создан',
+        description: `Новый заказ для ${orderData.clientName} был создан`,
       });
     } catch (err) {
-      setError('Failed to create order');
+      setError('Не удалось создать заказ');
       toast({
-        title: 'Error',
-        description: 'Failed to create order',
+        title: 'Ошибка',
+        description: 'Не удалось создать заказ',
         variant: 'destructive',
       });
     } finally {
@@ -244,14 +275,14 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       );
       
       toast({
-        title: 'Status Updated',
-        description: `Order status changed to ${status.replace('_', ' ')}`,
+        title: 'Статус обновлен',
+        description: `Статус заказа изменен на ${status.replace('_', ' ')}`,
       });
     } catch (err) {
-      setError('Failed to update order status');
+      setError('Не удалось обновить статус заказа');
       toast({
-        title: 'Error',
-        description: 'Failed to update order status',
+        title: 'Ошибка',
+        description: 'Не удалось обновить статус заказа',
         variant: 'destructive',
       });
     } finally {
@@ -260,7 +291,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Create commercial proposal
-  const createCommercialProposal = (orderId: string, selectedEquipment: EquipmentPart[], markup: number) => {
+  const createCommercialProposal = (orderId: string, selectedEquipment: EquipmentPart[], markup: number, responsibleEmployee: string = '') => {
     setLoading(true);
     try {
       // Calculate total cost with markup
@@ -271,12 +302,13 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const totalCost = subtotal * (1 + markup / 100);
       
       const proposal: CommercialProposal = {
-        id: `cp${Date.now()}`,
+        id: `КП-${Date.now()}`,
         orderId,
         equipment: selectedEquipment,
         markup,
         totalCost,
-        createdAt: new Date()
+        createdAt: new Date(),
+        responsibleEmployee: responsibleEmployee || null
       };
       
       setOrders(prevOrders => 
@@ -286,6 +318,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 ...order, 
                 commercialProposal: proposal,
                 status: OrderStatus.PROPOSAL_CREATED,
+                responsibleEmployee: responsibleEmployee || order.responsibleEmployee,
                 updatedAt: new Date() 
               }
             : order
@@ -293,16 +326,16 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       );
       
       toast({
-        title: 'Proposal Created',
-        description: `Commercial proposal created successfully`,
+        title: 'Предложение создано',
+        description: `Коммерческое предложение создано успешно`,
       });
       
       return proposal;
     } catch (err) {
-      setError('Failed to create commercial proposal');
+      setError('Не удалось создать коммерческое предложение');
       toast({
-        title: 'Error',
-        description: 'Failed to create commercial proposal',
+        title: 'Ошибка',
+        description: 'Не удалось создать коммерческое предложение',
         variant: 'destructive',
       });
       return null;
@@ -344,14 +377,14 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       );
       
       toast({
-        title: 'Inventory Updated',
-        description: 'Equipment inventory has been updated',
+        title: 'Инвентарь обновлен',
+        description: 'Инвентарь оборудования был обновлен',
       });
     } catch (err) {
-      setError('Failed to update inventory');
+      setError('Не удалось обновить инвентарь');
       toast({
-        title: 'Error',
-        description: 'Failed to update inventory',
+        title: 'Ошибка',
+        description: 'Не удалось обновить инвентарь',
         variant: 'destructive',
       });
     } finally {
@@ -366,59 +399,258 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const order = orders.find(o => o.commercialProposal?.id === proposalId);
       
       if (!order || !order.commercialProposal) {
-        throw new Error('Proposal not found');
+        throw new Error('Предложение не найдено');
       }
       
       // Create proposal text content
       const proposal = order.commercialProposal;
       const date = proposal.createdAt.toLocaleDateString();
       
-      let content = `COMMERCIAL PROPOSAL\n`;
+      let content = `КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ\n`;
       content += `=====================================\n\n`;
-      content += `Date: ${date}\n`;
-      content += `Client: ${order.clientName}\n`;
-      content += `Order ID: ${order.id}\n\n`;
-      content += `Description: ${order.description}\n\n`;
-      content += `EQUIPMENT AND PARTS:\n`;
+      content += `Дата: ${date}\n`;
+      content += `Клиент: ${order.clientName}\n`;
+      content += `ID Заказа: ${order.id}\n\n`;
+      content += `Описание: ${order.description}\n\n`;
+      content += `ОБОРУДОВАНИЕ И ДЕТАЛИ:\n`;
       content += `-------------------------------------\n`;
       
       proposal.equipment.forEach((item, index) => {
         content += `${index + 1}. ${item.name} (${item.articleNumber})\n`;
-        content += `   Quantity: ${item.quantity}\n`;
-        content += `   Price per unit: $${item.price.toFixed(2)}\n`;
-        content += `   Subtotal: $${(item.price * item.quantity).toFixed(2)}\n\n`;
+        content += `   Количество: ${item.quantity}\n`;
+        content += `   Цена за единицу: $${item.price.toFixed(2)}\n`;
+        content += `   Подитог: $${(item.price * item.quantity).toFixed(2)}\n\n`;
       });
       
       content += `-------------------------------------\n`;
-      content += `Subtotal: $${(proposal.totalCost / (1 + proposal.markup / 100)).toFixed(2)}\n`;
-      content += `Markup: ${proposal.markup}%\n`;
-      content += `TOTAL: $${proposal.totalCost.toFixed(2)}\n\n`;
+      content += `Подитог: $${(proposal.totalCost / (1 + proposal.markup / 100)).toFixed(2)}\n`;
+      content += `Наценка: ${proposal.markup}%\n`;
+      content += `ИТОГО: $${proposal.totalCost.toFixed(2)}\n\n`;
       content += `=====================================\n`;
-      content += `Thank you for your business!\n`;
+      content += `Благодарим за сотрудничество!\n`;
+      
+      if (proposal.responsibleEmployee) {
+        content += `\nОтветственный сотрудник: ${proposal.responsibleEmployee}\n`;
+      }
       
       // Create and download the file
       const blob = new Blob([content], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `proposal_${proposalId}.txt`;
+      a.download = `КП_${proposalId}.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
       toast({
-        title: 'Proposal Downloaded',
-        description: 'Commercial proposal has been downloaded as a text file',
+        title: 'Предложение загружено',
+        description: 'Коммерческое предложение загружено в виде текстового файла',
       });
     } catch (err) {
-      setError('Failed to download proposal');
+      setError('Не удалось загрузить предложение');
       toast({
-        title: 'Error',
-        description: 'Failed to download proposal',
+        title: 'Ошибка',
+        description: 'Не удалось загрузить предложение',
         variant: 'destructive',
       });
     }
+  };
+
+  // Download proposal as Word document
+  const downloadProposalAsWord = (proposalId: string) => {
+    try {
+      // Find the order with the given proposal
+      const order = orders.find(o => o.commercialProposal?.id === proposalId);
+      
+      if (!order || !order.commercialProposal) {
+        throw new Error('Предложение не найдено');
+      }
+      
+      const proposal = order.commercialProposal;
+      
+      // Create HTML content for Word document
+      let htmlContent = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
+        <head>
+          <meta charset="utf-8">
+          <title>Коммерческое предложение</title>
+        </head>
+        <body>
+          <h1 style="text-align:center;">КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ</h1>
+          <p><b>Дата:</b> ${proposal.createdAt.toLocaleDateString()}</p>
+          <p><b>Клиент:</b> ${order.clientName}</p>
+          <p><b>Номер заказа:</b> ${order.id}</p>
+          <p><b>Описание:</b> ${order.description}</p>
+          
+          <h2>Спецификация</h2>
+          
+          <table border="1" style="border-collapse: collapse; width: 100%;">
+            <tr style="background-color: #f2f2f2;">
+              <th style="padding: 8px; text-align: center;">№</th>
+              <th style="padding: 8px; text-align: center;">Наименование</th>
+              <th style="padding: 8px; text-align: center;">Кол-во</th>
+              <th style="padding: 8px; text-align: center;">Цена за ед. без НДС ($)</th>
+              <th style="padding: 8px; text-align: center;">Сумма без НДС ($)</th>
+              <th style="padding: 8px; text-align: center;">НДС 20% ($)</th>
+              <th style="padding: 8px; text-align: center;">Сумма с НДС ($)</th>
+            </tr>
+      `;
+      
+      let subtotalWithoutVAT = 0;
+      
+      proposal.equipment.forEach((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        const vat = itemTotal * 0.2;
+        const totalWithVAT = itemTotal + vat;
+        
+        subtotalWithoutVAT += itemTotal;
+        
+        htmlContent += `
+          <tr>
+            <td style="padding: 8px; text-align: center;">${index + 1}</td>
+            <td style="padding: 8px;">${item.name} (${item.articleNumber})</td>
+            <td style="padding: 8px; text-align: center;">${item.quantity}</td>
+            <td style="padding: 8px; text-align: right;">${item.price.toFixed(2)}</td>
+            <td style="padding: 8px; text-align: right;">${itemTotal.toFixed(2)}</td>
+            <td style="padding: 8px; text-align: right;">${vat.toFixed(2)}</td>
+            <td style="padding: 8px; text-align: right;">${totalWithVAT.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+      
+      const totalVAT = subtotalWithoutVAT * 0.2;
+      const totalWithVAT = subtotalWithoutVAT + totalVAT;
+      
+      htmlContent += `
+          <tr style="font-weight: bold; background-color: #f2f2f2;">
+            <td colspan="4" style="padding: 8px; text-align: right;">Итого:</td>
+            <td style="padding: 8px; text-align: right;">${subtotalWithoutVAT.toFixed(2)}</td>
+            <td style="padding: 8px; text-align: right;">${totalVAT.toFixed(2)}</td>
+            <td style="padding: 8px; text-align: right;">${totalWithVAT.toFixed(2)}</td>
+          </tr>
+        </table>
+        
+        <p><b>Наценка:</b> ${proposal.markup}%</p>
+        <p><b>ИТОГО с наценкой и НДС:</b> $${(totalWithVAT * (1 + proposal.markup / 100)).toFixed(2)}</p>
+      `;
+      
+      if (proposal.responsibleEmployee) {
+        htmlContent += `<p><b>Ответственный сотрудник:</b> ${proposal.responsibleEmployee}</p>`;
+      }
+      
+      htmlContent += `
+        <p style="margin-top: 30px; text-align: center;">Благодарим за сотрудничество!</p>
+        </body>
+        </html>
+      `;
+      
+      // Convert to Blob
+      const blob = new Blob([htmlContent], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `КП_${proposalId}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: 'Предложение загружено',
+        description: 'Коммерческое предложение загружено в формате Word',
+      });
+    } catch (err) {
+      setError('Не удалось загрузить предложение');
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось загрузить предложение',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Assign responsible employee
+  const assignResponsibleEmployee = (orderId: string, employeeName: string) => {
+    setLoading(true);
+    try {
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId
+            ? { 
+                ...order, 
+                responsibleEmployee: employeeName,
+                updatedAt: new Date() 
+              }
+            : order
+        )
+      );
+      
+      // Also update the commercial proposal if it exists
+      setOrders(prevOrders => 
+        prevOrders.map(order => {
+          if (order.id === orderId && order.commercialProposal) {
+            return {
+              ...order,
+              commercialProposal: {
+                ...order.commercialProposal,
+                responsibleEmployee: employeeName
+              }
+            };
+          }
+          return order;
+        })
+      );
+      
+      toast({
+        title: 'Сотрудник назначен',
+        description: `${employeeName} назначен ответственным за заказ`,
+      });
+    } catch (err) {
+      setError('Не удалось назначить сотрудника');
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось назначить сотрудника',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add new equipment (for director)
+  const addNewEquipment = (newEquipment: Omit<EquipmentPart, 'id'>) => {
+    setLoading(true);
+    try {
+      const equipmentId = `e${equipment.length + 1}`;
+      
+      const equipmentItem: EquipmentPart = {
+        id: equipmentId,
+        ...newEquipment
+      };
+      
+      setEquipment(prevEquipment => [...prevEquipment, equipmentItem]);
+      
+      toast({
+        title: 'Оборудование добавлено',
+        description: `${newEquipment.name} добавлено в каталог`,
+      });
+    } catch (err) {
+      setError('Не удалось добавить оборудование');
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось добавить оборудование',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get employee list
+  const getEmployeeList = (): string[] => {
+    return EMPLOYEE_LIST;
   };
 
   return (
@@ -437,7 +669,11 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         getAllEquipment,
         getEquipmentByArticle,
         updateEquipmentInventory,
-        downloadProposalAsTxt
+        downloadProposalAsTxt,
+        downloadProposalAsWord,
+        assignResponsibleEmployee,
+        addNewEquipment,
+        getEmployeeList
       }}
     >
       {children}
@@ -449,7 +685,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 export const useOrders = () => {
   const context = useContext(OrderContext);
   if (context === undefined) {
-    throw new Error('useOrders must be used within an OrderProvider');
+    throw new Error('useOrders должен использоваться внутри OrderProvider');
   }
   return context;
 };

@@ -23,6 +23,7 @@ import Equipment from './pages/ConstructorPages/Equipment';
 import Workshop from './pages/ConstructorPages/Workshop';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import ProductManagement from './pages/DirectorPages/ProductManagement';
 
 // Import framer-motion for page transitions
 import { AnimatePresence } from 'framer-motion';
@@ -37,7 +38,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse">Loading...</div>
+        <div className="animate-pulse">Загрузка...</div>
       </div>
     );
   }
@@ -74,7 +75,7 @@ const AppContent = () => {
   return (
     <AnimatePresence mode="wait">
       <AppLayout>
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div>Загрузка...</div>}>
           <Routes location={location} key={location.pathname}>
             <Route path="/login" element={<Login />} />
             
@@ -115,7 +116,13 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
             
-            {/* New routes for Equipment, Workshop, Profile, and Settings */}
+            <Route path="/products" element={
+              <ProtectedRoute>
+                <ProductManagement />
+              </ProtectedRoute>
+            } />
+            
+            {/* Routes for Equipment, Workshop, Profile, and Settings */}
             <Route path="/equipment" element={
               <ProtectedRoute>
                 <Equipment />

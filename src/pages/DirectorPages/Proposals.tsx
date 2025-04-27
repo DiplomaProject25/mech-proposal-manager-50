@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, FileText, Download } from 'lucide-react';
+import { Search, FileText, Download, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +12,7 @@ import Header from '@/components/layout/Header';
 import StatusBadge from '@/components/common/StatusBadge';
 
 const Proposals = () => {
-  const { orders, downloadProposalAsTxt } = useOrders();
+  const { orders, downloadProposalAsTxt, downloadProposalAsWord } = useOrders();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -28,12 +28,17 @@ const Proposals = () => {
       order.id.toLowerCase().includes(query) ||
       order.clientName.toLowerCase().includes(query) ||
       order.description.toLowerCase().includes(query) ||
-      order.commercialProposal?.id.toLowerCase().includes(query)
+      order.commercialProposal?.id.toLowerCase().includes(query) ||
+      order.responsibleEmployee?.toLowerCase().includes(query)
     );
   });
 
-  const handleDownloadProposal = (proposalId: string) => {
+  const handleDownloadProposalAsTxt = (proposalId: string) => {
     downloadProposalAsTxt(proposalId);
+  };
+
+  const handleDownloadProposalAsWord = (proposalId: string) => {
+    downloadProposalAsWord(proposalId);
   };
 
   const handleViewOrder = (orderId: string) => {
@@ -42,14 +47,14 @@ const Proposals = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header title="Commercial Proposals" />
+      <Header title="Коммерческие предложения" />
       
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search proposals..."
+              placeholder="Поиск предложений..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -66,31 +71,32 @@ const Proposals = () => {
             <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm">
               <CardContent className="pt-6 pb-6 text-center">
                 <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-xl font-medium text-gray-700 mb-2">No proposals found</h3>
+                <h3 className="text-xl font-medium text-gray-700 mb-2">Предложения не найдены</h3>
                 <p className="text-gray-500">
                   {searchQuery 
-                    ? 'Try adjusting your search criteria'
-                    : 'There are no commercial proposals created yet'}
+                    ? 'Попробуйте изменить критерии поиска'
+                    : 'Коммерческие предложения еще не созданы'}
                 </p>
               </CardContent>
             </Card>
           ) : (
             <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>All Commercial Proposals</CardTitle>
+                <CardTitle>Все коммерческие предложения</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Order ID</TableHead>
-                        <TableHead>Client</TableHead>
-                        <TableHead>Proposal ID</TableHead>
-                        <TableHead>Date Created</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Total Amount</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead>ID заказа</TableHead>
+                        <TableHead>Клиент</TableHead>
+                        <TableHead>ID предложения</TableHead>
+                        <TableHead>Дата создания</TableHead>
+                        <TableHead>Статус</TableHead>
+                        <TableHead>Ответственный</TableHead>
+                        <TableHead>Сумма</TableHead>
+                        <TableHead className="text-right">Действия</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -105,6 +111,9 @@ const Proposals = () => {
                           <TableCell>
                             <StatusBadge status={order.status} />
                           </TableCell>
+                          <TableCell>
+                            {order.responsibleEmployee || "Не назначен"}
+                          </TableCell>
                           <TableCell className="font-medium">
                             ${order.commercialProposal?.totalCost.toFixed(2)}
                           </TableCell>
@@ -113,17 +122,26 @@ const Proposals = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleDownloadProposal(order.commercialProposal!.id)}
+                                onClick={() => handleDownloadProposalAsWord(order.commercialProposal!.id)}
+                                className="flex items-center"
+                              >
+                                <File className="mr-2 h-4 w-4" />
+                                Word
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDownloadProposalAsTxt(order.commercialProposal!.id)}
                                 className="flex items-center"
                               >
                                 <Download className="mr-2 h-4 w-4" />
-                                Download
+                                TXT
                               </Button>
                               <Button
                                 size="sm"
                                 onClick={() => handleViewOrder(order.id)}
                               >
-                                View Order
+                                Просмотр
                               </Button>
                             </div>
                           </TableCell>
@@ -135,7 +153,7 @@ const Proposals = () => {
               </CardContent>
               <CardFooter className="border-t p-4 bg-gray-50">
                 <div className="text-sm text-gray-500">
-                  Showing {filteredProposals.length} of {ordersWithProposals.length} proposals
+                  Показано {filteredProposals.length} из {ordersWithProposals.length} предложений
                 </div>
               </CardFooter>
             </Card>

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Filter, Search } from 'lucide-react';
+import { Plus, Filter, Search, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -18,17 +18,25 @@ import OrderCard from '@/components/common/OrderCard';
 import NewOrderDialog from '@/components/common/NewOrderDialog';
 
 const Orders = () => {
-  const { filteredOrders } = useOrders();
+  const { filteredOrders, getEmployeeList } = useOrders();
   const { user } = useAuth();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [employeeFilter, setEmployeeFilter] = useState<string>('all');
   const [isNewOrderDialogOpen, setIsNewOrderDialogOpen] = useState(false);
+  
+  const employeeList = getEmployeeList();
   
   // Filter and search orders
   const filteredAndSearchedOrders = filteredOrders.filter(order => {
     // Apply status filter
     if (statusFilter !== 'all' && order.status !== statusFilter) {
+      return false;
+    }
+    
+    // Apply employee filter
+    if (employeeFilter !== 'all' && order.responsibleEmployee !== employeeFilter) {
       return false;
     }
     
@@ -53,7 +61,7 @@ const Orders = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header title="Orders" />
+      <Header title="Заказы" />
       
       <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -61,7 +69,7 @@ const Orders = () => {
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Search orders..."
+                placeholder="Поиск заказов..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -76,16 +84,38 @@ const Orders = () => {
                 <SelectTrigger className="w-full">
                   <div className="flex items-center">
                     <Filter className="mr-2 h-4 w-4 text-gray-500" />
-                    <SelectValue placeholder="Filter by status" />
+                    <SelectValue placeholder="Фильтр по статусу" />
                   </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="all">Все статусы</SelectItem>
                   {Object.values(OrderStatus).map((status) => (
                     <SelectItem key={status} value={status}>
                       {status.replace(/_/g, ' ').split(' ').map(word => 
                         word.charAt(0).toUpperCase() + word.slice(1)
                       ).join(' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="w-full sm:w-64">
+              <Select
+                value={employeeFilter}
+                onValueChange={setEmployeeFilter}
+              >
+                <SelectTrigger className="w-full">
+                  <div className="flex items-center">
+                    <User className="mr-2 h-4 w-4 text-gray-500" />
+                    <SelectValue placeholder="Фильтр по сотруднику" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Все сотрудники</SelectItem>
+                  {employeeList.map((employee) => (
+                    <SelectItem key={employee} value={employee}>
+                      {employee}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -99,7 +129,7 @@ const Orders = () => {
               onClick={handleOpenNewOrderDialog}
             >
               <Plus className="mr-2 h-4 w-4" />
-              New Order
+              Новый заказ
             </Button>
           )}
         </div>
@@ -111,11 +141,11 @@ const Orders = () => {
             transition={{ duration: 0.5 }}
             className="text-center py-12"
           >
-            <h3 className="text-xl font-medium text-gray-700 mb-2">No orders found</h3>
+            <h3 className="text-xl font-medium text-gray-700 mb-2">Заказы не найдены</h3>
             <p className="text-gray-500">
-              {searchQuery || statusFilter !== 'all'
-                ? 'Try adjusting your search or filter criteria'
-                : 'There are no orders available at the moment'}
+              {searchQuery || statusFilter !== 'all' || employeeFilter !== 'all'
+                ? 'Попробуйте изменить критерии поиска или фильтрации'
+                : 'На данный момент нет доступных заказов'}
             </p>
           </motion.div>
         ) : (
