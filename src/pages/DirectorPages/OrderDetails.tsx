@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -14,6 +15,7 @@ const OrderDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { getOrderById, updateOrderStatus, downloadProposalAsWord } = useOrders();
   
   const order = orderId ? getOrderById(orderId) : null;
   
@@ -43,7 +45,7 @@ const OrderDetails = () => {
   
   const handleDownloadProposal = () => {
     if (order.commercialProposal) {
-      downloadProposalAsTxt(order.commercialProposal.id);
+      downloadProposalAsWord(order.commercialProposal.id);
     }
   };
   

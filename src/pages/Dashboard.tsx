@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
@@ -190,8 +191,8 @@ const Dashboard = () => {
                         tick={{ fontSize: 12 }} 
                       />
                       <YAxis 
-                        tickFormatter={(value) => Math.round(value)}
                         allowDecimals={false}
+                        tickFormatter={(value) => Math.floor(value)}
                       />
                       <Tooltip />
                       <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
@@ -220,7 +221,10 @@ const Dashboard = () => {
                     >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
-                      <YAxis />
+                      <YAxis 
+                        allowDecimals={false}
+                        tickFormatter={(value) => Math.floor(value)}
+                      />
                       <Tooltip />
                       <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                     </BarChart>
