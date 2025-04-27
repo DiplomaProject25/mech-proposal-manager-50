@@ -1,160 +1,237 @@
+
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, FileText, File, ChevronLeft } from 'lucide-react';
+import { FileText, Download, ExternalLink, FileDown, ArrowUpDown, Search } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useOrders } from '@/context/OrderContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useOrders, OrderStatus } from '@/context/OrderContext';
 import Header from '@/components/layout/Header';
-import StatusBadge from '@/components/common/StatusBadge';
+
+// Define the function that was missing
+const formatProposalId = (id: string) => {
+  // Format the proposal ID (e.g., "cp1" to "КП-00001")
+  if (!id) return '';
+  
+  // Check if it already starts with КП-
+  if (id.startsWith('КП-')) return id;
+  
+  // Extract numeric part if possible
+  const numericPart = id.replace(/\D/g, '');
+  const paddedNumber = numericPart.padStart(5, '0');
+  
+  return `КП-${paddedNumber}`;
+};
 
 const Proposals = () => {
-  const { orders } = useOrders();
+  const { orders, downloadProposalAsTxt, downloadProposalAsWord } = useOrders();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   
+  // Filter orders that have commercial proposals
   const ordersWithProposals = orders.filter(order => order.commercialProposal !== null);
   
+  // Filter by search term
   const filteredProposals = ordersWithProposals.filter(order => {
-    const query = searchQuery.toLowerCase().trim();
-    if (query === '') return true;
-    
+    const searchLower = search.toLowerCase();
     return (
-      order.id.toLowerCase().includes(query) ||
-      order.clientName.toLowerCase().includes(query) ||
-      order.description.toLowerCase().includes(query) ||
-      order.commercialProposal?.id.toLowerCase().includes(query) ||
-      order.responsibleEmployee?.toLowerCase().includes(query)
+      order.id.toLowerCase().includes(searchLower) ||
+      order.clientName.toLowerCase().includes(searchLower) ||
+      (order.commercialProposal?.id && formatProposalId(order.commercialProposal.id).toLowerCase().includes(searchLower))
     );
   });
-
-  const handleRowClick = (orderId: string) => {
-    navigate(`/orders/${orderId}`);
+  
+  // Sort proposals
+  const sortedProposals = [...filteredProposals].sort((a, b) => {
+    if (sortBy === 'date') {
+      const dateA = new Date(a.commercialProposal!.createdAt).getTime();
+      const dateB = new Date(b.commercialProposal!.createdAt).getTime();
+      return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+    } else if (sortBy === 'client') {
+      return sortDirection === 'asc'
+        ? a.clientName.localeCompare(b.clientName)
+        : b.clientName.localeCompare(a.clientName);
+    } else if (sortBy === 'price') {
+      const priceA = a.commercialProposal!.totalCost;
+      const priceB = b.commercialProposal!.totalCost;
+      return sortDirection === 'asc' ? priceA - priceB : priceB - priceA;
+    }
+    return 0;
+  });
+  
+  const toggleSortDirection = () => {
+    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
   };
-
-  const handleBack = () => {
-    navigate('/proposals');
-  };
-
+  
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50">
       <Header title="Коммерческие предложения" />
       
       <main className="container mx-auto px-4 py-8">
-        {location.state?.from === '/orders' && (
-          <div className="mb-6">
-            <Button
-              variant="ghost"
-              onClick={handleBack}
-              className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-            >
-              <ChevronLeft className="mr-1 h-4 w-4" />
-              Назад к предложениям
-            </Button>
-          </div>
-        )}
-        
-        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Поиск предложений..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-        
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {filteredProposals.length === 0 ? (
-            <Card className="border-none shadow-sm bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-              <CardContent className="pt-6 pb-6 text-center">
-                <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">Предложения не найдены</h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  {searchQuery 
-                    ? 'Попробуйте изменить критерии поиска'
-                    : 'Коммерческие предложения еще не созданы'}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border-none shadow-sm bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>Все коммерческие предложения</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID заказа</TableHead>
-                        <TableHead>Клиент</TableHead>
-                        <TableHead>ID предложения</TableHead>
-                        <TableHead>Дата создания</TableHead>
-                        <TableHead>Статус</TableHead>
-                        <TableHead>Ответственный</TableHead>
-                        <TableHead>Сумма</TableHead>
-                        <TableHead className="text-right">Действия</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredProposals.map((order) => (
-                        <TableRow 
-                          key={order.commercialProposal?.id}
-                          className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                          onClick={() => handleRowClick(order.id)}
-                        >
-                          <TableCell>{order.id}</TableCell>
-                          <TableCell>{order.clientName}</TableCell>
-                          <TableCell>{formatProposalId(order.commercialProposal?.id || '')}</TableCell>
-                          <TableCell>
-                            {order.commercialProposal?.createdAt.toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <StatusBadge status={order.status} />
-                          </TableCell>
-                          <TableCell>
-                            {order.responsibleEmployee || "Не назначен"}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            ${order.commercialProposal?.totalCost.toFixed(2)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDownloadProposalAsWord(order.commercialProposal!.id);
-                              }}
-                              className="flex items-center"
+          <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-xl font-semibold">
+                <span className="flex items-center">
+                  <FileText className="mr-2 h-5 w-5" />
+                  Коммерческие предложения
+                </span>
+              </CardTitle>
+              <div className="flex items-center space-x-2">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                  <Input
+                    type="text"
+                    placeholder="Поиск предложений..."
+                    className="pl-9 w-[250px]"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-1">
+                      <ArrowUpDown className="h-4 w-4" />
+                      <span>Сортировка</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => { setSortBy('date'); toggleSortDirection(); }}>
+                      По дате {sortBy === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setSortBy('client'); toggleSortDirection(); }}>
+                      По клиенту {sortBy === 'client' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setSortBy('price'); toggleSortDirection(); }}>
+                      По стоимости {sortBy === 'price' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        № Предложения
+                      </th>
+                      <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        № Заказа
+                      </th>
+                      <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Клиент
+                      </th>
+                      <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Дата создания
+                      </th>
+                      <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Стоимость
+                      </th>
+                      <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ответственный
+                      </th>
+                      <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Статус заказа
+                      </th>
+                      <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Действия
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedProposals.map(order => (
+                      <tr 
+                        key={order.commercialProposal!.id} 
+                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="py-4 px-4 whitespace-nowrap font-medium">
+                          {formatProposalId(order.commercialProposal!.id)}
+                        </td>
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          {order.id}
+                        </td>
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          {order.clientName}
+                        </td>
+                        <td className="py-4 px-4 whitespace-nowrap text-gray-500">
+                          {new Date(order.commercialProposal!.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="py-4 px-4 whitespace-nowrap text-right font-medium">
+                          ${order.commercialProposal!.totalCost.toFixed(2)}
+                        </td>
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          {order.commercialProposal!.responsibleEmployee || '-'}
+                        </td>
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            order.status === OrderStatus.READY_FOR_DEVELOPMENT 
+                              ? 'bg-green-100 text-green-800' 
+                              : order.status === OrderStatus.PROPOSAL_CREATED
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {order.status.replace(/_/g, ' ')}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 whitespace-nowrap text-right">
+                          <div className="flex justify-end space-x-2">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-8 px-2">
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => downloadProposalAsTxt(order.commercialProposal!.id)}>
+                                  <FileText className="mr-2 h-4 w-4" />
+                                  Скачать как TXT
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => downloadProposalAsWord(order.commercialProposal!.id)}>
+                                  <FileDown className="mr-2 h-4 w-4" />
+                                  Скачать как DOC
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-8 px-2"
+                              onClick={() => navigate(`/orders/${order.id}`)}
                             >
-                              <File className="mr-2 h-4 w-4" />
-                              Word
+                              <ExternalLink className="h-4 w-4" />
                             </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-              <CardFooter className="border-t p-4 bg-gray-50 dark:bg-gray-800/50">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Показано {filteredProposals.length} из {ordersWithProposals.length} предложений
-                </div>
-              </CardFooter>
-            </Card>
-          )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                
+                {sortedProposals.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">Нет коммерческих предложений, соответствующих критериям поиска.</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
       </main>
     </div>
