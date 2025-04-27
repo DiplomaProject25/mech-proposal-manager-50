@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, FileText, File } from 'lucide-react';
@@ -7,13 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useOrders } from '@/context/OrderContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import StatusBadge from '@/components/common/StatusBadge';
 
 const Proposals = () => {
-  const { orders, downloadProposalAsWord } = useOrders();
+  const { orders } = useOrders();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   
   // Фильтрация заказов с предложениями
@@ -37,8 +37,12 @@ const Proposals = () => {
     downloadProposalAsWord(proposalId);
   };
 
-  const handleViewOrder = (orderId: string) => {
+  const handleRowClick = (orderId: string) => {
     navigate(`/orders/${orderId}`);
+  };
+
+  const handleBack = () => {
+    navigate('/proposals');
   };
 
   // Генерация реалистичного ID для предложения
@@ -60,6 +64,19 @@ const Proposals = () => {
       <Header title="Коммерческие предложения" />
       
       <main className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          {location.state?.from === '/orders' && (
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+            >
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              Назад к предложениям
+            </Button>
+          )}
+        </div>
+        
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -111,7 +128,11 @@ const Proposals = () => {
                     </TableHeader>
                     <TableBody>
                       {filteredProposals.map((order) => (
-                        <TableRow key={order.commercialProposal?.id}>
+                        <TableRow 
+                          key={order.commercialProposal?.id}
+                          className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                          onClick={() => handleRowClick(order.id)}
+                        >
                           <TableCell>{order.id}</TableCell>
                           <TableCell>{order.clientName}</TableCell>
                           <TableCell>{formatProposalId(order.commercialProposal?.id || '')}</TableCell>
@@ -128,23 +149,18 @@ const Proposals = () => {
                             ${order.commercialProposal?.totalCost.toFixed(2)}
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDownloadProposalAsWord(order.commercialProposal!.id)}
-                                className="flex items-center"
-                              >
-                                <File className="mr-2 h-4 w-4" />
-                                Word
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => handleViewOrder(order.id)}
-                              >
-                                Просмотр
-                              </Button>
-                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                downloadProposalAsWord(order.commercialProposal!.id);
+                              }}
+                              className="flex items-center"
+                            >
+                              <File className="mr-2 h-4 w-4" />
+                              Word
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}

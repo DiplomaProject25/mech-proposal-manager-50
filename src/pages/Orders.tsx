@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Filter, Search, User } from 'lucide-react';
@@ -28,19 +27,15 @@ const Orders = () => {
   
   const employeeList = getEmployeeList();
   
-  // Filter and search orders
   const filteredAndSearchedOrders = filteredOrders.filter(order => {
-    // Apply status filter
     if (statusFilter !== 'all' && order.status !== statusFilter) {
       return false;
     }
     
-    // Apply employee filter
     if (employeeFilter !== 'all' && order.responsibleEmployee !== employeeFilter) {
       return false;
     }
     
-    // Apply search filter
     const searchTerms = searchQuery.toLowerCase().trim();
     if (searchTerms === '') return true;
     
@@ -60,7 +55,7 @@ const Orders = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header title="Заказы" />
       
       <main className="container mx-auto px-4 py-8">
@@ -72,7 +67,7 @@ const Orders = () => {
                 placeholder="Поиск заказов..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 dark:bg-gray-800 dark:border-gray-700"
               />
             </div>
             
@@ -125,7 +120,7 @@ const Orders = () => {
           
           {user?.role === UserRole.DIRECTOR && (
             <Button 
-              className="flex items-center whitespace-nowrap"
+              className="flex items-center whitespace-nowrap bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
               onClick={handleOpenNewOrderDialog}
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -169,7 +164,6 @@ const Orders = () => {
         )}
       </main>
 
-      {/* New Order Dialog */}
       <NewOrderDialog 
         isOpen={isNewOrderDialogOpen} 
         onClose={handleCloseNewOrderDialog} 

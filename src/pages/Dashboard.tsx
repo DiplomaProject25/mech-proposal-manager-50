@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -11,7 +10,6 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { orders } = useOrders();
 
-  // Count orders by status
   const orderCountsByStatus = Object.values(OrderStatus).map(status => {
     const count = orders.filter(order => order.status === status).length;
     return {
@@ -22,7 +20,6 @@ const Dashboard = () => {
     };
   });
 
-  // Count orders by month (last 6 months)
   const getLastSixMonths = () => {
     const data = [];
     const today = new Date();
@@ -46,16 +43,15 @@ const Dashboard = () => {
 
   const monthlyData = getLastSixMonths();
   
-  // Director-specific stats
   const directorStats = [
     {
-      title: 'Total Orders',
+      title: 'Всего заказов',
       value: orders.length,
       change: '+12%',
       changeType: 'increase'
     },
     {
-      title: 'Accepted Proposals',
+      title: 'Принятые предложения',
       value: orders.filter(order => 
         order.status === OrderStatus.READY_FOR_DEVELOPMENT ||
         order.status === OrderStatus.IN_PROGRESS ||
@@ -66,23 +62,22 @@ const Dashboard = () => {
       changeType: 'increase'
     },
     {
-      title: 'Rejected Proposals',
+      title: 'Отклоненные предложения',
       value: orders.filter(order => order.status === OrderStatus.REJECTED).length,
       change: '-2%',
       changeType: 'decrease'
     },
     {
-      title: 'Completion Rate',
+      title: 'Процент выполнения',
       value: `${Math.round((orders.filter(order => order.status === OrderStatus.COMPLETED).length / orders.length) * 100)}%`,
       change: '+3%',
       changeType: 'increase'
     }
   ];
-  
-  // Constructor-specific stats
+
   const constructorStats = [
     {
-      title: 'Available Orders',
+      title: 'Доступные заказы',
       value: orders.filter(order => 
         order.status === OrderStatus.READY_FOR_DEVELOPMENT && !order.assignedTo
       ).length,
@@ -90,13 +85,13 @@ const Dashboard = () => {
       changeType: 'increase'
     },
     {
-      title: 'My Orders',
+      title: 'Мои заказы',
       value: orders.filter(order => order.assignedTo === user?.id).length,
       change: '0',
       changeType: 'neutral'
     },
     {
-      title: 'In Assembly',
+      title: 'В сборке',
       value: orders.filter(order => 
         order.status === OrderStatus.ASSEMBLY && order.assignedTo === user?.id
       ).length,
@@ -104,7 +99,7 @@ const Dashboard = () => {
       changeType: 'increase'
     },
     {
-      title: 'Awaiting Parts',
+      title: 'Ожидает комплектующие',
       value: orders.filter(order => 
         order.status === OrderStatus.PURCHASING && order.assignedTo === user?.id
       ).length,
@@ -112,12 +107,12 @@ const Dashboard = () => {
       changeType: 'decrease'
     }
   ];
-  
+
   const stats = user?.role === UserRole.DIRECTOR ? directorStats : constructorStats;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header title="Dashboard" />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Header title="Панель управления" />
       
       <main className="container mx-auto px-4 py-8">
         <motion.div
@@ -133,7 +128,7 @@ const Dashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
-              <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm">
+              <Card className="border-none shadow-sm bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-gray-500">
                     {stat.title}
@@ -162,9 +157,9 @@ const Dashboard = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm h-full">
+            <Card className="border-none shadow-sm bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm h-full">
               <CardHeader>
-                <CardTitle>Orders by Status</CardTitle>
+                <CardTitle>Заказы по статусу</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-80">
@@ -181,7 +176,7 @@ const Dashboard = () => {
                         height={70} 
                         tick={{ fontSize: 12 }} 
                       />
-                      <YAxis />
+                      <YAxis tickFormatter={(value) => Math.round(value)} />
                       <Tooltip />
                       <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                     </BarChart>
@@ -196,9 +191,9 @@ const Dashboard = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm h-full">
+            <Card className="border-none shadow-sm bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm h-full">
               <CardHeader>
-                <CardTitle>Monthly Orders</CardTitle>
+                <CardTitle>Заказы по месяцам</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-80">

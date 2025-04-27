@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Phone, Building, MapPin, Edit2, Save, ChevronDown } from 'lucide-react';
@@ -24,24 +23,22 @@ const Profile = () => {
   const [editing, setEditing] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   
-  // User profile data (in a real app, this would come from the API)
   const [profile, setProfile] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    phone: '+1 (555) 123-4567',
-    department: user?.role === UserRole.DIRECTOR ? 'Management' : 'Engineering',
-    position: user?.role === UserRole.DIRECTOR ? 'Director' : 'Constructor',
-    location: 'Main Office, Building 3',
-    bio: 'Experienced professional with over 5 years in the manufacturing industry. Specialized in mechanical engineering and production optimization.',
+    phone: '+7 (999) 123-4567',
+    department: user?.role === UserRole.DIRECTOR ? 'Руководство' : 'Конструкторский отдел',
+    position: user?.role === UserRole.DIRECTOR ? 'Директор' : 'Конструктор',
+    location: 'Главный офис, Строение 3',
+    bio: 'Опытный специалист с более чем 5-летним стажем в производственной отрасли. Специализация в области машиностроения и оптимизации производства.',
   });
   
-  // Sample activity history
   const activityHistory = [
-    { date: '2023-11-15', action: 'Completed order #o3', time: '14:32' },
-    { date: '2023-11-10', action: 'Started assembly on order #o2', time: '09:45' },
-    { date: '2023-11-05', action: 'Created commercial proposal for Tech Solutions', time: '16:20' },
-    { date: '2023-10-25', action: 'Assigned to order #o3', time: '11:15' },
-    { date: '2023-10-20', action: 'Account created', time: '09:00' },
+    { date: '2023-11-15', action: 'Завершен заказ #o3', time: '14:32' },
+    { date: '2023-11-10', action: 'Начата сборка заказа #o2', time: '09:45' },
+    { date: '2023-11-05', action: 'Создано коммерческое предложение для Tech Solutions', time: '16:20' },
+    { date: '2023-10-25', action: 'Назначен на заказ #o3', time: '11:15' },
+    { date: '2023-10-20', action: 'Создан аккаунт', time: '09:00' },
   ];
   
   const handleEdit = () => {
@@ -51,14 +48,14 @@ const Profile = () => {
   const handleSave = () => {
     setEditing(false);
     toast({
-      title: 'Profile Updated',
-      description: 'Your profile information has been saved successfully.',
+      title: 'Профиль Обновлен',
+      description: 'Ваши данные профиля успешно сохранены.',
     });
   };
   
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header title="Profile" />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Header title="Профиль" />
       
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -77,7 +74,7 @@ const Profile = () => {
                     </AvatarFallback>
                   </Avatar>
                 </div>
-                <CardTitle className="text-xl">{profile.name}</CardTitle>
+                <CardTitle className="text-xl">Информация профиля</CardTitle>
                 <p className="text-sm text-gray-500 mt-1">{profile.position}</p>
               </CardHeader>
               <CardContent className="text-center pt-4">
@@ -110,7 +107,7 @@ const Profile = () => {
                 >
                   <CollapsibleTrigger asChild>
                     <Button variant="ghost" className="w-full flex justify-between items-center">
-                      <span>Activity History</span>
+                      <span>История активности</span>
                       <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
                         isHistoryOpen ? 'rotate-180' : ''
                       }`} />
@@ -175,7 +172,7 @@ const Profile = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
+                      <Label htmlFor="name">ФИО</Label>
                       {editing ? (
                         <Input 
                           id="name" 
@@ -188,7 +185,7 @@ const Profile = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
+                      <Label htmlFor="email">Электронная почта</Label>
                       {editing ? (
                         <Input 
                           id="email" 
@@ -202,7 +199,7 @@ const Profile = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
+                      <Label htmlFor="phone">Телефон</Label>
                       {editing ? (
                         <Input 
                           id="phone" 
@@ -215,7 +212,7 @@ const Profile = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="department">Department</Label>
+                      <Label htmlFor="department">Отдел</Label>
                       {editing ? (
                         <Input 
                           id="department" 
@@ -228,7 +225,7 @@ const Profile = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="position">Position</Label>
+                      <Label htmlFor="position">Должность</Label>
                       {editing ? (
                         <Input 
                           id="position" 
@@ -241,7 +238,7 @@ const Profile = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="location">Location</Label>
+                      <Label htmlFor="location">Местоположение</Label>
                       {editing ? (
                         <Input 
                           id="location" 
@@ -255,7 +252,7 @@ const Profile = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="bio">Biography</Label>
+                    <Label htmlFor="bio">О себе</Label>
                     {editing ? (
                       <textarea 
                         id="bio" 
