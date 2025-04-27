@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, FileText, Download, File } from 'lucide-react';
+import { Search, FileText, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,14 +12,14 @@ import Header from '@/components/layout/Header';
 import StatusBadge from '@/components/common/StatusBadge';
 
 const Proposals = () => {
-  const { orders, downloadProposalAsTxt, downloadProposalAsWord } = useOrders();
+  const { orders, downloadProposalAsWord } = useOrders();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Filter orders that have proposals
+  // Фильтрация заказов с предложениями
   const ordersWithProposals = orders.filter(order => order.commercialProposal !== null);
   
-  // Search functionality
+  // Функционал поиска
   const filteredProposals = ordersWithProposals.filter(order => {
     const query = searchQuery.toLowerCase().trim();
     if (query === '') return true;
@@ -33,10 +33,6 @@ const Proposals = () => {
     );
   });
 
-  const handleDownloadProposalAsTxt = (proposalId: string) => {
-    downloadProposalAsTxt(proposalId);
-  };
-
   const handleDownloadProposalAsWord = (proposalId: string) => {
     downloadProposalAsWord(proposalId);
   };
@@ -45,8 +41,22 @@ const Proposals = () => {
     navigate(`/orders/${orderId}`);
   };
 
+  // Генерация реалистичного ID для предложения
+  const formatProposalId = (id: string) => {
+    // Если ID уже содержит формат "КП-XXXX-XXXX", вернем его
+    if (id.startsWith('КП-')) return id;
+    
+    // Иначе форматируем как "КП-XXXX-XXXX" с годом и последовательным номером
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const randomNum = Math.floor(10000 + Math.random() * 90000).toString();
+    
+    return `КП-${year}${month}-${randomNum}`;
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header title="Коммерческие предложения" />
       
       <main className="container mx-auto px-4 py-8">
@@ -68,11 +78,11 @@ const Proposals = () => {
           transition={{ duration: 0.5 }}
         >
           {filteredProposals.length === 0 ? (
-            <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm">
+            <Card className="border-none shadow-sm bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
               <CardContent className="pt-6 pb-6 text-center">
                 <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-xl font-medium text-gray-700 mb-2">Предложения не найдены</h3>
-                <p className="text-gray-500">
+                <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">Предложения не найдены</h3>
+                <p className="text-gray-500 dark:text-gray-400">
                   {searchQuery 
                     ? 'Попробуйте изменить критерии поиска'
                     : 'Коммерческие предложения еще не созданы'}
@@ -80,7 +90,7 @@ const Proposals = () => {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm">
+            <Card className="border-none shadow-sm bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle>Все коммерческие предложения</CardTitle>
               </CardHeader>
@@ -104,7 +114,7 @@ const Proposals = () => {
                         <TableRow key={order.commercialProposal?.id}>
                           <TableCell>{order.id}</TableCell>
                           <TableCell>{order.clientName}</TableCell>
-                          <TableCell>{order.commercialProposal?.id}</TableCell>
+                          <TableCell>{formatProposalId(order.commercialProposal?.id || '')}</TableCell>
                           <TableCell>
                             {order.commercialProposal?.createdAt.toLocaleDateString()}
                           </TableCell>
@@ -129,15 +139,6 @@ const Proposals = () => {
                                 Word
                               </Button>
                               <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDownloadProposalAsTxt(order.commercialProposal!.id)}
-                                className="flex items-center"
-                              >
-                                <Download className="mr-2 h-4 w-4" />
-                                TXT
-                              </Button>
-                              <Button
                                 size="sm"
                                 onClick={() => handleViewOrder(order.id)}
                               >
@@ -151,8 +152,8 @@ const Proposals = () => {
                   </Table>
                 </div>
               </CardContent>
-              <CardFooter className="border-t p-4 bg-gray-50">
-                <div className="text-sm text-gray-500">
+              <CardFooter className="border-t p-4 bg-gray-50 dark:bg-gray-800/50">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
                   Показано {filteredProposals.length} из {ordersWithProposals.length} предложений
                 </div>
               </CardFooter>

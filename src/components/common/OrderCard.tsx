@@ -32,25 +32,25 @@ const OrderCard: React.FC<OrderCardProps> = ({ order }) => {
       transition={{ duration: 0.3 }}
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
     >
-      <Card className="h-full overflow-hidden border border-gray-200 bg-white/80 backdrop-blur-sm hover:shadow-md transition-all duration-300">
+      <Card className="h-full overflow-hidden border border-gray-200 bg-white/80 backdrop-blur-sm hover:shadow-md transition-all duration-300 dark:bg-gray-800/80 dark:border-gray-700">
         <CardContent className="p-5">
           <div className="mb-4 flex items-center justify-between">
             <StatusBadge status={order.status} />
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               ID: {order.id}
             </span>
           </div>
           
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
             {order.clientName}
           </h3>
           
-          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+          <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
             {order.description}
           </p>
           
           <div className="space-y-2">
-            <div className="flex items-center text-sm text-gray-500">
+            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
               <User className="h-4 w-4 mr-2" />
               <span>
                 {order.responsibleEmployee 
@@ -59,14 +59,14 @@ const OrderCard: React.FC<OrderCardProps> = ({ order }) => {
               </span>
             </div>
             
-            <div className="flex items-center text-sm text-gray-500">
+            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
               <Calendar className="h-4 w-4 mr-2" />
               <span>
                 {new Date(order.createdAt).toLocaleDateString()}
               </span>
             </div>
             
-            <div className="flex items-center text-sm text-gray-500">
+            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
               <ClipboardList className="h-4 w-4 mr-2" />
               <span>
                 {order.commercialProposal ? 'Есть предложение' : 'Нет предложения'}
@@ -75,7 +75,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order }) => {
           </div>
         </CardContent>
         
-        <CardFooter className="p-4 bg-gray-50 border-t border-gray-100">
+        <CardFooter className="p-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700">
           <Button
             onClick={handleClick}
             className="w-full bg-blue-500 hover:bg-blue-600 text-white"

@@ -36,17 +36,17 @@ const ProductManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
-  // New product form
+  // Форма нового продукта
   const [newProduct, setNewProduct] = useState({
     name: '',
     articleNumber: '',
     price: 0,
     availableQuantity: 0,
     location: '',
-    quantity: 1 // Default quantity for new equipment
+    quantity: 1 // Количество по умолчанию для нового оборудования
   });
   
-  // Check if the user is a director
+  // Проверка, является ли пользователь директором
   React.useEffect(() => {
     if (user?.role !== UserRole.DIRECTOR) {
       navigate('/dashboard');
@@ -60,7 +60,7 @@ const ProductManagement = () => {
   
   const allEquipment = getAllEquipment();
   
-  // Filter equipment based on search term
+  // Фильтрация оборудования на основе поискового запроса
   const filteredEquipment = allEquipment.filter(
     eq => 
       eq.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -85,7 +85,7 @@ const ProductManagement = () => {
   };
   
   const handleAddNewProduct = () => {
-    // Validation
+    // Валидация
     if (!newProduct.name.trim()) {
       toast({
         title: 'Ошибка',
@@ -122,7 +122,7 @@ const ProductManagement = () => {
       return;
     }
     
-    // Add new product
+    // Добавление нового продукта
     addNewEquipment(newProduct);
     handleCloseAddDialog();
   };
@@ -132,7 +132,7 @@ const ProductManagement = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header title="Управление продуктами" />
       
       <main className="container mx-auto px-4 py-8">
@@ -161,7 +161,7 @@ const ProductManagement = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Card className="border-none shadow-sm bg-white/80 backdrop-blur-sm">
+          <Card className="border-none shadow-sm bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Package className="mr-2 h-5 w-5" />
@@ -172,8 +172,8 @@ const ProductManagement = () => {
               {filteredEquipment.length === 0 ? (
                 <div className="text-center py-12">
                   <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-xl font-medium text-gray-700 mb-2">Товары не найдены</h3>
-                  <p className="text-gray-500">
+                  <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">Товары не найдены</h3>
+                  <p className="text-gray-500 dark:text-gray-400">
                     {searchTerm ? 'Попробуйте изменить критерии поиска' : 'В каталоге еще нет товаров'}
                   </p>
                 </div>
@@ -208,7 +208,7 @@ const ProductManagement = () => {
         </motion.div>
       </main>
 
-      {/* Add Product Dialog */}
+      {/* Диалог добавления продукта */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
