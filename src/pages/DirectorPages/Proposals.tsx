@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, FileText, File } from 'lucide-react';
+import { Search, FileText, File, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,10 +16,8 @@ const Proposals = () => {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Фильтрация заказов с предложениями
   const ordersWithProposals = orders.filter(order => order.commercialProposal !== null);
   
-  // Функционал поиска
   const filteredProposals = ordersWithProposals.filter(order => {
     const query = searchQuery.toLowerCase().trim();
     if (query === '') return true;
@@ -33,10 +31,6 @@ const Proposals = () => {
     );
   });
 
-  const handleDownloadProposalAsWord = (proposalId: string) => {
-    downloadProposalAsWord(proposalId);
-  };
-
   const handleRowClick = (orderId: string) => {
     navigate(`/orders/${orderId}`);
   };
@@ -45,27 +39,13 @@ const Proposals = () => {
     navigate('/proposals');
   };
 
-  // Генерация реалистичного ID для предложения
-  const formatProposalId = (id: string) => {
-    // Если ID уже содержит формат "КП-XXXX-XXXX", вернем его
-    if (id.startsWith('КП-')) return id;
-    
-    // Иначе форматируем как "КП-XXXX-XXXX" с годом и последовательным номером
-    const date = new Date();
-    const year = date.getFullYear().toString().slice(-2);
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const randomNum = Math.floor(10000 + Math.random() * 90000).toString();
-    
-    return `КП-${year}${month}-${randomNum}`;
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header title="Коммерческие предложения" />
       
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          {location.state?.from === '/orders' && (
+        {location.state?.from === '/orders' && (
+          <div className="mb-6">
             <Button
               variant="ghost"
               onClick={handleBack}
@@ -74,8 +54,8 @@ const Proposals = () => {
               <ChevronLeft className="mr-1 h-4 w-4" />
               Назад к предложениям
             </Button>
-          )}
-        </div>
+          </div>
+        )}
         
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="relative w-full sm:w-64">
@@ -154,7 +134,7 @@ const Proposals = () => {
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                downloadProposalAsWord(order.commercialProposal!.id);
+                                handleDownloadProposalAsWord(order.commercialProposal!.id);
                               }}
                               className="flex items-center"
                             >

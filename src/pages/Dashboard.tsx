@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,10 +13,18 @@ const Dashboard = () => {
 
   const orderCountsByStatus = Object.values(OrderStatus).map(status => {
     const count = orders.filter(order => order.status === status).length;
+    const translatedStatus = {
+      'NEW': 'Новый',
+      'PENDING': 'В ожидании',
+      'READY_FOR_DEVELOPMENT': 'Готов к разработке',
+      'IN_PROGRESS': 'В работе',
+      'ASSEMBLY': 'Сборка',
+      'COMPLETED': 'Завершен',
+      'REJECTED': 'Отклонен'
+    }[status] || status;
+    
     return {
-      status: status.replace('_', ' ').split(' ').map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1)
-      ).join(' '),
+      status: translatedStatus,
       count
     };
   });
@@ -46,7 +55,7 @@ const Dashboard = () => {
   const directorStats = [
     {
       title: 'Всего заказов',
-      value: orders.length,
+      value: orders.length.toString(),
       change: '+12%',
       changeType: 'increase'
     },
@@ -57,19 +66,23 @@ const Dashboard = () => {
         order.status === OrderStatus.IN_PROGRESS ||
         order.status === OrderStatus.ASSEMBLY ||
         order.status === OrderStatus.COMPLETED
-      ).length,
+      ).length.toString(),
       change: '+5%',
       changeType: 'increase'
     },
     {
       title: 'Отклоненные предложения',
-      value: orders.filter(order => order.status === OrderStatus.REJECTED).length,
+      value: orders.filter(order => 
+        order.status === OrderStatus.REJECTED
+      ).length.toString(),
       change: '-2%',
       changeType: 'decrease'
     },
     {
       title: 'Процент выполнения',
-      value: `${Math.round((orders.filter(order => order.status === OrderStatus.COMPLETED).length / orders.length) * 100)}%`,
+      value: `${Math.round((orders.filter(order => 
+        order.status === OrderStatus.COMPLETED
+      ).length / orders.length) * 100)}%`,
       change: '+3%',
       changeType: 'increase'
     }
@@ -80,13 +93,13 @@ const Dashboard = () => {
       title: 'Доступные заказы',
       value: orders.filter(order => 
         order.status === OrderStatus.READY_FOR_DEVELOPMENT && !order.assignedTo
-      ).length,
+      ).length.toString(),
       change: '+3',
       changeType: 'increase'
     },
     {
       title: 'Мои заказы',
-      value: orders.filter(order => order.assignedTo === user?.id).length,
+      value: orders.filter(order => order.assignedTo === user?.id).length.toString(),
       change: '0',
       changeType: 'neutral'
     },
@@ -94,7 +107,7 @@ const Dashboard = () => {
       title: 'В сборке',
       value: orders.filter(order => 
         order.status === OrderStatus.ASSEMBLY && order.assignedTo === user?.id
-      ).length,
+      ).length.toString(),
       change: '+1',
       changeType: 'increase'
     },
@@ -102,7 +115,7 @@ const Dashboard = () => {
       title: 'Ожидает комплектующие',
       value: orders.filter(order => 
         order.status === OrderStatus.PURCHASING && order.assignedTo === user?.id
-      ).length,
+      ).length.toString(),
       change: '-1',
       changeType: 'decrease'
     }
