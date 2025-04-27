@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronLeft, User, Calendar, ClipboardList, FileText, Download, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,11 +11,7 @@ import StatusBadge from '@/components/common/StatusBadge';
 
 const OrderDetails = () => {
   const { orderId } = useParams<{ orderId: string }>();
-  const { 
-    getOrderById, 
-    updateOrderStatus,
-    downloadProposalAsTxt
-  } = useOrders();
+  const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -68,6 +63,11 @@ const OrderDetails = () => {
     });
   };
   
+  const handleBack = () => {
+    const fromProposals = location.state?.from === '/proposals';
+    navigate(fromProposals ? '/proposals' : '/orders');
+  };
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <Header title="Order Details" />
@@ -76,11 +76,11 @@ const OrderDetails = () => {
         <div className="mb-6">
           <Button
             variant="ghost"
-            onClick={() => navigate('/orders')}
+            onClick={handleBack}
             className="flex items-center text-gray-600 hover:text-gray-900"
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
-            Back to Orders
+            {location.state?.from === '/proposals' ? 'Back to Proposals' : 'Back to Orders'}
           </Button>
         </div>
         

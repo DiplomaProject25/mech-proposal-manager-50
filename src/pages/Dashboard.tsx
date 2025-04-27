@@ -25,7 +25,7 @@ const Dashboard = () => {
     
     return {
       status: translatedStatus,
-      count
+      count: count
     };
   });
 
@@ -124,7 +124,7 @@ const Dashboard = () => {
   const stats = user?.role === UserRole.DIRECTOR ? directorStats : constructorStats;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50">
       <Header title="Панель управления" />
       
       <main className="container mx-auto px-4 py-8">
@@ -189,7 +189,10 @@ const Dashboard = () => {
                         height={70} 
                         tick={{ fontSize: 12 }} 
                       />
-                      <YAxis tickFormatter={(value) => Math.round(value)} />
+                      <YAxis 
+                        tickFormatter={(value) => Math.round(value)}
+                        allowDecimals={false}
+                      />
                       <Tooltip />
                       <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                     </BarChart>

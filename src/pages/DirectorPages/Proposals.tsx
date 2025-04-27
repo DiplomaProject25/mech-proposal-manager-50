@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FileText, Download, ExternalLink, FileDown, ArrowUpDown, Search } from 'lucide-react';
+import { FileText, Download, FileDown, ArrowUpDown, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,8 +30,8 @@ const formatProposalId = (id: string) => {
 };
 
 const Proposals = () => {
-  const { orders, downloadProposalAsTxt, downloadProposalAsWord } = useOrders();
   const navigate = useNavigate();
+  const { downloadProposalAsWord, orders } = useOrders();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -70,6 +69,10 @@ const Proposals = () => {
   
   const toggleSortDirection = () => {
     setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
+
+  const handleRowClick = (orderId: string) => {
+    navigate(`/orders/${orderId}`);
   };
   
   return (
@@ -158,7 +161,8 @@ const Proposals = () => {
                     {sortedProposals.map(order => (
                       <tr 
                         key={order.commercialProposal!.id} 
-                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => handleRowClick(order.id)}
                       >
                         <td className="py-4 px-4 whitespace-nowrap font-medium">
                           {formatProposalId(order.commercialProposal!.id)}
@@ -190,34 +194,17 @@ const Proposals = () => {
                           </span>
                         </td>
                         <td className="py-4 px-4 whitespace-nowrap text-right">
-                          <div className="flex justify-end space-x-2">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-8 px-2">
-                                  <Download className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => downloadProposalAsTxt(order.commercialProposal!.id)}>
-                                  <FileText className="mr-2 h-4 w-4" />
-                                  Скачать как TXT
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => downloadProposalAsWord(order.commercialProposal!.id)}>
-                                  <FileDown className="mr-2 h-4 w-4" />
-                                  Скачать как DOC
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                            
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="h-8 px-2"
-                              onClick={() => navigate(`/orders/${order.id}`)}
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 px-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              downloadProposalAsWord(order.commercialProposal!.id);
+                            }}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
                         </td>
                       </tr>
                     ))}
