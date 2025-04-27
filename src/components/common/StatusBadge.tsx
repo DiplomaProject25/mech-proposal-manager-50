@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { OrderStatus } from '@/context/OrderContext';
@@ -10,7 +9,6 @@ interface StatusBadgeProps {
 }
 
 const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) => {
-  // Определение цветов и меток статусов на русском
   const statusConfig = {
     [OrderStatus.NEW]: {
       color: 'bg-gray-100 text-gray-800 border-gray-300',

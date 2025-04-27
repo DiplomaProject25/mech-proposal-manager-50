@@ -1,15 +1,22 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, Moon, Sun, Lock, Save } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Settings as SettingsIcon, Moon, Sun, Lock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import Header from '@/components/layout/Header';
 
@@ -18,31 +25,24 @@ const Settings = () => {
   const { toast } = useToast();
   
   const [darkMode, setDarkMode] = useState(false);
-  const [language, setLanguage] = useState('ru');
-  const [autoSave, setAutoSave] = useState(true);
+  const [notifications, setNotifications] = useState(true);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
   // Обновление темы интерфейса в реальном времени
-  useEffect(() => {
+  React.useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
       document.body.style.backgroundColor = '#1A1F2C';
       document.body.style.color = '#FFFFFF';
     } else {
       document.documentElement.classList.remove('dark');
-      document.body.style.backgroundColor = '';
-      document.body.style.color = '';
+      document.body.style.backgroundColor = '#FFFFFF';
+      document.body.style.color = '#000000';
     }
   }, [darkMode]);
-
-  const handleSaveSettings = () => {
-    toast({
-      title: 'Настройки сохранены',
-      description: 'Ваши настройки успешно обновлены.',
-    });
-  };
 
   const handleChangePassword = () => {
     // Проверка паролей
@@ -67,7 +67,8 @@ const Settings = () => {
       description: 'Ваш пароль был успешно изменен',
     });
 
-    // Сбросить поля
+    // Закрыть диалог и сбросить поля
+    setIsPasswordDialogOpen(false);
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
@@ -115,35 +116,15 @@ const Settings = () => {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                          <Label htmlFor="language">Язык</Label>
+                          <Label htmlFor="notifications">Уведомления</Label>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Выберите предпочитаемый язык интерфейса.
-                          </p>
-                        </div>
-                        <select
-                          id="language"
-                          value={language}
-                          onChange={(e) => setLanguage(e.target.value)}
-                          className="rounded-md border border-gray-300 dark:border-gray-600 py-2 px-3 bg-white dark:bg-gray-700"
-                        >
-                          <option value="ru">Русский</option>
-                          <option value="en">Английский</option>
-                          <option value="fr">Французский</option>
-                          <option value="de">Немецкий</option>
-                        </select>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label htmlFor="autosave">Автосохранение</Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Автоматически сохранять вашу работу.
+                            Включить или отключить уведомления
                           </p>
                         </div>
                         <Switch
-                          id="autosave"
-                          checked={autoSave}
-                          onCheckedChange={setAutoSave}
+                          id="notifications"
+                          checked={notifications}
+                          onCheckedChange={setNotifications}
                         />
                       </div>
                     </div>
@@ -196,41 +177,11 @@ const Settings = () => {
                     
                     <div className="space-y-4">
                       <div className="space-y-4">
-                        <h4 className="font-medium">Изменить пароль</h4>
-                        
-                        <div className="grid gap-2">
-                          <Label htmlFor="current-password">Текущий пароль</Label>
-                          <Input 
-                            id="current-password" 
-                            type="password"
-                            value={currentPassword}
-                            onChange={(e) => setCurrentPassword(e.target.value)}
-                          />
-                        </div>
-                        
-                        <div className="grid gap-2">
-                          <Label htmlFor="new-password">Новый пароль</Label>
-                          <Input 
-                            id="new-password" 
-                            type="password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                          />
-                        </div>
-                        
-                        <div className="grid gap-2">
-                          <Label htmlFor="confirm-password">Подтвердите новый пароль</Label>
-                          <Input 
-                            id="confirm-password" 
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                          />
-                        </div>
-                        
-                        <Button 
-                          onClick={handleChangePassword} 
-                          className="flex items-center w-full md:w-auto"
+                        <h4 className="font-medium">Смена пароля</h4>
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsPasswordDialogOpen(true)}
+                          className="flex items-center"
                         >
                           <Lock className="mr-2 h-4 w-4" />
                           Изменить пароль
@@ -241,15 +192,52 @@ const Settings = () => {
                 </TabsContent>
               </Tabs>
             </CardContent>
-            <CardFooter className="border-t bg-gray-50 dark:bg-gray-800 flex justify-end">
-              <Button onClick={handleSaveSettings} className="flex items-center">
-                <Save className="mr-2 h-4 w-4" />
-                Сохранить
-              </Button>
-            </CardFooter>
           </Card>
         </motion.div>
       </main>
+
+      {/* Диалог изменения пароля */}
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Изменение пароля</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="current-password">Текущий пароль</Label>
+              <Input
+                id="current-password"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="new-password">Новый пароль</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="confirm-password">Подтвердите новый пароль</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleChangePassword}>
+              Сохранить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -30,34 +30,40 @@ const Sidebar = () => {
 
   const menuItems = [
     {
-      title: 'Dashboard',
+      title: 'Панель управления',
       icon: <Home size={20} />,
       href: '/dashboard',
       forRoles: [UserRole.DIRECTOR, UserRole.CONSTRUCTOR],
     },
     {
-      title: 'Orders',
+      title: 'Заказы',
       icon: <ClipboardList size={20} />,
       href: '/orders',
       forRoles: [UserRole.DIRECTOR, UserRole.CONSTRUCTOR],
     },
     {
-      title: 'Proposals',
+      title: 'Коммерческие предложения',
       icon: <FileText size={20} />,
       href: '/proposals',
       forRoles: [UserRole.DIRECTOR],
     },
     {
-      title: 'Equipment',
+      title: 'Оборудование',
       icon: <Package size={20} />,
       href: '/equipment',
       forRoles: [UserRole.CONSTRUCTOR],
     },
     {
-      title: 'Workshop',
+      title: 'Цех',
       icon: <Wrench size={20} />,
       href: '/workshop',
       forRoles: [UserRole.CONSTRUCTOR],
+    },
+    {
+      title: 'Управление товарами',
+      icon: <Package size={20} />,
+      href: '/products',
+      forRoles: [UserRole.DIRECTOR],
     },
   ];
 
@@ -72,16 +78,16 @@ const Sidebar = () => {
       initial="expanded"
       animate={collapsed ? 'collapsed' : 'expanded'}
       transition={{ duration: 0.3 }}
-      className="bg-sidebar shadow-lg h-screen fixed left-0 top-0 z-10 flex flex-col border-r border-gray-200"
+      className="bg-white dark:bg-gray-800 shadow-lg h-screen fixed left-0 top-0 z-10 flex flex-col border-r border-gray-200 dark:border-gray-700"
     >
-      <div className="p-4 flex items-center justify-between border-b border-gray-200">
+      <div className="p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
         <AnimatePresence>
           {!collapsed && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="font-semibold text-lg"
+              className="font-semibold text-lg dark:text-white"
             >
               MechERP
             </motion.div>
@@ -89,7 +95,7 @@ const Sidebar = () => {
         </AnimatePresence>
         <button 
           onClick={toggleCollapse}
-          className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+          className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
         >
           {collapsed ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
         </button>
@@ -98,7 +104,6 @@ const Sidebar = () => {
       <div className="flex-1 py-4 overflow-y-auto">
         <nav className="space-y-1 px-2">
           {menuItems.map((item) => {
-            // Check if the current user has permission to see this item
             if (!item.forRoles.includes(user.role)) return null;
 
             return (
@@ -109,7 +114,7 @@ const Sidebar = () => {
                   "flex items-center p-2 rounded-lg transition-all duration-200",
                   location.pathname === item.href
                     ? "bg-blue-500 text-white"
-                    : "hover:bg-gray-200"
+                    : "hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-200"
                 )}
               >
                 <span className="flex items-center justify-center">
@@ -133,14 +138,14 @@ const Sidebar = () => {
         </nav>
       </div>
 
-      <div className="py-2 px-2 border-t border-gray-200">
+      <div className="py-2 px-2 border-t border-gray-200 dark:border-gray-700">
         <Link
           to="/profile"
           className={cn(
             "flex items-center p-2 rounded-lg transition-all duration-200",
             location.pathname === '/profile'
               ? "bg-blue-500 text-white"
-              : "hover:bg-gray-200"
+              : "hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-200"
           )}
         >
           <span className="flex items-center justify-center">
@@ -154,7 +159,7 @@ const Sidebar = () => {
                 exit={{ opacity: 0 }}
                 className="ml-3"
               >
-                Profile
+                Профиль
               </motion.span>
             )}
           </AnimatePresence>
@@ -166,7 +171,7 @@ const Sidebar = () => {
             "flex items-center p-2 rounded-lg transition-all duration-200",
             location.pathname === '/settings'
               ? "bg-blue-500 text-white"
-              : "hover:bg-gray-200"
+              : "hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-200"
           )}
         >
           <span className="flex items-center justify-center">
@@ -180,17 +185,17 @@ const Sidebar = () => {
                 exit={{ opacity: 0 }}
                 className="ml-3"
               >
-                Settings
+                Настройки
               </motion.span>
             )}
           </AnimatePresence>
         </Link>
       </div>
 
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={logout}
-          className="flex items-center w-full p-2 rounded-lg hover:bg-gray-200 transition-all duration-200"
+          className="flex items-center w-full p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-200 transition-all duration-200"
         >
           <span className="flex items-center justify-center">
             <LogOut size={20} />
@@ -203,7 +208,7 @@ const Sidebar = () => {
                 exit={{ opacity: 0 }}
                 className="ml-3"
               >
-                Logout
+                Выйти
               </motion.span>
             )}
           </AnimatePresence>
