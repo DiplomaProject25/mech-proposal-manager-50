@@ -18,9 +18,10 @@ const OrderDetails = () => {
   const { getOrderById, updateOrderStatus, downloadProposalAsWord } = useOrders();
   
   const order = orderId ? getOrderById(orderId) : null;
+  
+  const fromProposals = location.state?.from === '/proposals';
 
   const handleBack = () => {
-    const fromProposals = location.state?.from === '/proposals';
     navigate(fromProposals ? '/proposals' : '/orders');
   };
   
@@ -82,7 +83,7 @@ const OrderDetails = () => {
             className="flex items-center text-gray-600 hover:text-gray-900"
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
-            {location.state?.from === '/proposals' ? 'Назад к предложениям' : 'Назад к заказам'}
+            {fromProposals ? 'Назад к предложениям' : 'Назад к заказам'}
           </Button>
         </div>
         
