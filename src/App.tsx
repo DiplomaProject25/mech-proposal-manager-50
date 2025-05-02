@@ -5,7 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth, UserRole } from './context/AuthContext';
 import { OrderProvider } from './context/OrderContext';
 import { AnimatePresence } from 'framer-motion';
 
@@ -24,6 +24,7 @@ import Equipment from './pages/ConstructorPages/Equipment';
 import Workshop from './pages/ConstructorPages/Workshop';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import AccountantDashboard from './pages/AccountantPages/AccountantDashboard';
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 // Main app component
 const AppContent = () => {
   const location = useLocation();
+  const { user } = useAuth();
 
   return (
     <AnimatePresence mode="wait">
@@ -135,6 +137,13 @@ const AppContent = () => {
             <Route path="/settings" element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            } />
+
+            {/* Accountant Routes */}
+            <Route path="/accountant" element={
+              <ProtectedRoute>
+                <AccountantDashboard />
               </ProtectedRoute>
             } />
             

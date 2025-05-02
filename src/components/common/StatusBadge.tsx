@@ -47,6 +47,14 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) => {
       color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
       label: 'Завершен',
     },
+    [OrderStatus.IN_DELIVERY]: {
+      color: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+      label: 'В пути',
+    },
+    [OrderStatus.UNLOADING]: {
+      color: 'bg-pink-100 text-pink-800 border-pink-300',
+      label: 'Разгрузка',
+    },
   };
 
   const { color, label } = statusConfig[status];

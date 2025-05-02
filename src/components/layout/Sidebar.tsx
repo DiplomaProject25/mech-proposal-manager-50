@@ -12,7 +12,8 @@ import {
   LogOut, 
   Minimize2, 
   Maximize2,
-  User
+  User,
+  ShoppingCart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth, UserRole } from '@/context/AuthContext';
@@ -33,7 +34,7 @@ const Sidebar = () => {
       title: 'Панель управления',
       icon: <Home size={20} />,
       href: '/dashboard',
-      forRoles: [UserRole.DIRECTOR, UserRole.CONSTRUCTOR],
+      forRoles: [UserRole.DIRECTOR, UserRole.CONSTRUCTOR, UserRole.ACCOUNTANT],
     },
     {
       title: 'Заказы',
@@ -48,7 +49,7 @@ const Sidebar = () => {
       forRoles: [UserRole.DIRECTOR],
     },
     {
-      title: 'Оборудование',
+      title: 'Каталог запчастей',
       icon: <Package size={20} />,
       href: '/equipment',
       forRoles: [UserRole.CONSTRUCTOR],
@@ -58,6 +59,12 @@ const Sidebar = () => {
       icon: <Wrench size={20} />,
       href: '/workshop',
       forRoles: [UserRole.CONSTRUCTOR],
+    },
+    {
+      title: 'Управление закупками',
+      icon: <ShoppingCart size={20} />,
+      href: '/accountant',
+      forRoles: [UserRole.ACCOUNTANT],
     },
   ];
 

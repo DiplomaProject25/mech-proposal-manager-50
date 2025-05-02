@@ -5,13 +5,6 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, FileText, User, Calendar, Calculator, ShoppingCart } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useOrders, OrderStatus } from '@/context/OrderContext';
 import Header from '@/components/layout/Header';
@@ -20,20 +13,10 @@ import StatusBadge from '@/components/common/StatusBadge';
 const OrderDetails = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
-  const { getOrderById, updateOrderStatus, getEmployeeList, toggleProposalPrices } = useOrders();
+  const { getOrderById, updateOrderStatus, toggleProposalPrices } = useOrders();
   const { toast } = useToast();
   
-  const [selectedEmployee, setSelectedEmployee] = useState<string>('');
-  const employeeList = getEmployeeList();
-  
   const order = orderId ? getOrderById(orderId) : null;
-  
-  // Set selected employee from order if exists
-  useEffect(() => {
-    if (order && order.responsibleEmployee) {
-      setSelectedEmployee(order.responsibleEmployee);
-    }
-  }, [order]);
   
   if (!order) {
     return (
@@ -63,10 +46,6 @@ const OrderDetails = () => {
   
   const handleCreateProposal = () => {
     navigate(`/proposals/create/${orderId}`);
-  };
-  
-  const handleEmployeeChange = (value: string) => {
-    setSelectedEmployee(value);
   };
   
   const handleCalculatePrices = () => {
@@ -153,25 +132,6 @@ const OrderDetails = () => {
                     
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Ответственный сотрудник</label>
-                        <Select 
-                          value={selectedEmployee} 
-                          onValueChange={handleEmployeeChange}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Выберите сотрудника" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {employeeList.map(employee => (
-                              <SelectItem key={employee} value={employee}>
-                                {employee}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="space-y-2">
                         <label className="text-sm font-medium">Статус заказа</label>
                         <div className="flex flex-wrap gap-2">
                           {order.status === OrderStatus.NEW && (
@@ -198,15 +158,6 @@ const OrderDetails = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleStatusChange(OrderStatus.NEED_PURCHASING)}
-                                className="border-amber-300 text-amber-700 hover:bg-amber-50"
-                              >
-                                <ShoppingCart className="mr-1 h-4 w-4" />
-                                Необходима закупка
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
                                 onClick={() => handleStatusChange(OrderStatus.REJECTED)}
                                 className="border-red-300 text-red-700 hover:bg-red-50"
                               >
@@ -216,7 +167,18 @@ const OrderDetails = () => {
                           )}
                           
                           {order.status === OrderStatus.READY_FOR_DEVELOPMENT && (
-                            <span className="text-green-700">Заказ готов к разработке.</span>
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleStatusChange(OrderStatus.NEED_PURCHASING)}
+                                className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                              >
+                                <ShoppingCart className="mr-1 h-4 w-4" />
+                                Необходима закупка
+                              </Button>
+                              <span className="text-green-700">Заказ готов к разработке.</span>
+                            </>
                           )}
                         </div>
                       </div>

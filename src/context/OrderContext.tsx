@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth, UserRole } from './AuthContext';
@@ -12,7 +11,9 @@ export enum OrderStatus {
   IN_PROGRESS = 'в_процессе',
   ASSEMBLY = 'сборка',
   PURCHASING = 'закупка', 
-  NEED_PURCHASING = 'необходима_закупка', // New status
+  NEED_PURCHASING = 'необходима_закупка',
+  IN_DELIVERY = 'в_пути',
+  UNLOADING = 'разгрузка',
   COMPLETED = 'завершен'
 }
 
@@ -73,6 +74,8 @@ interface OrderContextType {
   addNewEquipment: (equipment: Omit<EquipmentPart, 'id'>) => void;
   getEmployeeList: () => string[];
   toggleProposalPrices: (orderId: string, show: boolean) => void;
+  getOrdersByStatus: (status: OrderStatus | OrderStatus[]) => Order[];
+  getNeededPurchaseItems: () => { part: EquipmentPart, neededQuantity: number }[];
 }
 
 // Create context
@@ -713,6 +716,44 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return EMPLOYEE_LIST;
   };
 
+  // Get orders by status
+  const getOrdersByStatus = (status: OrderStatus | OrderStatus[]): Order[] => {
+    const statusArray = Array.isArray(status) ? status : [status];
+    return orders.filter(order => statusArray.includes(order.status));
+  };
+  
+  // Get needed purchase items
+  const getNeededPurchaseItems = () => {
+    const purchaseOrders = getOrdersByStatus([OrderStatus.NEED_PURCHASING, OrderStatus.PURCHASING, OrderStatus.IN_DELIVERY, OrderStatus.UNLOADING]);
+    
+    const neededItems: Record<string, { part: EquipmentPart, neededQuantity: number }> = {};
+    
+    purchaseOrders.forEach(order => {
+      if (!order.commercialProposal) return;
+      
+      order.commercialProposal.equipment.forEach(part => {
+        const currentPart = getEquipmentByArticle(part.articleNumber);
+        if (!currentPart) return;
+        
+        const availableQuantity = currentPart.availableQuantity;
+        const requiredQuantity = part.quantity;
+        
+        if (availableQuantity < requiredQuantity) {
+          if (neededItems[part.articleNumber]) {
+            neededItems[part.articleNumber].neededQuantity += (requiredQuantity - availableQuantity);
+          } else {
+            neededItems[part.articleNumber] = {
+              part: currentPart,
+              neededQuantity: requiredQuantity - availableQuantity
+            };
+          }
+        }
+      });
+    });
+    
+    return Object.values(neededItems);
+  };
+
   return (
     <OrderContext.Provider
       value={{
@@ -734,7 +775,9 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         assignResponsibleEmployee,
         addNewEquipment,
         getEmployeeList,
-        toggleProposalPrices
+        toggleProposalPrices,
+        getOrdersByStatus,
+        getNeededPurchaseItems
       }}
     >
       {children}
