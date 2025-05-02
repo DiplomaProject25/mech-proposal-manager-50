@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -34,7 +33,7 @@ const CommercialProposal = () => {
     orderId: orderId || '',
     tax: 20,
     markup: 15,
-    companyMarkup: 10, // New field for company markup
+    companyMarkup: 10,
     selectedParts: [],
     totalCost: 0,
     status: OrderStatus.PROPOSAL_CREATED,
@@ -146,13 +145,13 @@ const CommercialProposal = () => {
       return;
     }
     
-    // Using createCommercialProposal
+    // Using createCommercialProposal with the correct number of arguments
     createCommercialProposal(
       form.orderId,
       form.selectedParts,
       form.markup,
-      '', // responsibleEmployee is now empty as per requirements
-      form.companyMarkup // adding company markup
+      '', // Empty string for responsibleEmployee as per requirements
+      form.companyMarkup // Adding company markup
     );
     
     navigate(`/orders/${form.orderId}`);

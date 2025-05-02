@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -85,11 +84,11 @@ const OrderDetails = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle className="text-2xl">
-                    Заказ #{order.id}
+                    Заказ #{order?.id}
                   </CardTitle>
-                  <p className="text-gray-500 mt-1">{order.clientName}</p>
+                  <p className="text-gray-500 mt-1">{order?.clientName}</p>
                 </div>
-                <StatusBadge status={order.status} className="ml-2" />
+                {order && <StatusBadge status={order.status} className="ml-2" />}
               </div>
             </CardHeader>
             <CardContent>
@@ -188,7 +187,7 @@ const OrderDetails = () => {
               <div className="border-t border-gray-200 pt-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-medium">Коммерческое предложение</h3>
-                  {order.commercialProposal && (
+                  {order?.commercialProposal && (
                     <Button variant="outline" className="flex items-center">
                       <Download className="mr-1 h-4 w-4" />
                       Скачать в Word
@@ -196,7 +195,7 @@ const OrderDetails = () => {
                   )}
                 </div>
                 
-                {order.commercialProposal ? (
+                {order?.commercialProposal ? (
                   <div className="bg-white rounded-md border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="w-full">

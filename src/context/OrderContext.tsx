@@ -34,6 +34,7 @@ export interface CommercialProposal {
   orderId: string;
   equipment: EquipmentPart[];
   markup: number; // percentage
+  companyMarkup?: number; // percentage for company markup
   totalCost: number;
   createdAt: Date;
   responsibleEmployee?: string; // Name of the responsible employee
@@ -63,7 +64,7 @@ interface OrderContextType {
   error: string | null;
   createOrder: (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTo' | 'commercialProposal' | 'responsibleEmployee'>) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus, assignTo?: string | null) => void;
-  createCommercialProposal: (orderId: string, equipment: EquipmentPart[], markup: number, responsibleEmployee?: string) => void;
+  createCommercialProposal: (orderId: string, equipment: EquipmentPart[], markup: number, responsibleEmployee?: string, companyMarkup?: number) => void;
   getOrderById: (id: string) => Order | null;
   getAllEquipment: () => EquipmentPart[];
   getEquipmentByArticle: (articleNumber: string) => EquipmentPart | null;
@@ -329,7 +330,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Create commercial proposal
-  const createCommercialProposal = (orderId: string, selectedEquipment: EquipmentPart[], markup: number, responsibleEmployee: string = '') => {
+  const createCommercialProposal = (orderId: string, selectedEquipment: EquipmentPart[], markup: number, responsibleEmployee: string = '', companyMarkup: number = 0) => {
     setLoading(true);
     try {
       // Calculate total cost with markup
@@ -337,13 +338,14 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         (total, item) => total + (item.price * item.quantity), 
         0
       );
-      const totalCost = subtotal * (1 + markup / 100);
+      const totalCost = subtotal * (1 + markup / 100 + companyMarkup / 100);
       
       const proposal: CommercialProposal = {
         id: `КП-${Date.now()}`,
         orderId,
         equipment: selectedEquipment,
         markup,
+        companyMarkup,
         totalCost,
         createdAt: new Date(),
         responsibleEmployee: responsibleEmployee || null,
