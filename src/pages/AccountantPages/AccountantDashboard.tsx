@@ -1,299 +1,281 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Package, TruckIcon, ArrowUp, ShoppingCart } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { DollarSign, FileText, Users, PieChart, Database, ArrowDown } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useOrders, OrderStatus } from '@/context/OrderContext';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/layout/Header';
 
-// Define extended OrderStatus for purchasing flow
+// Define the order statuses for purchasing flow
 const purchaseStatuses = [
-  "NEED_PURCHASING",
-  "PURCHASING_IN_PROGRESS",
-  "IN_TRANSIT",
-  "UNLOADING",
-  "READY_FOR_DEVELOPMENT"
+  OrderStatus.NEED_PURCHASING,
+  OrderStatus.PURCHASING,
+  OrderStatus.IN_DELIVERY,
+  OrderStatus.UNLOADING,
+  OrderStatus.READY_FOR_DEVELOPMENT
 ];
 
 const AccountantDashboard = () => {
   const { orders, updateOrderStatus } = useOrders();
   const { toast } = useToast();
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>("all");
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState("all");
   
   // Filter orders that require purchasing
   const purchaseOrders = orders.filter(order => 
-    purchaseStatuses.includes(order.status as string)
+    purchaseStatuses.includes(order.status as OrderStatus)
   );
   
   const filteredOrders = selectedStatusFilter === "all" 
     ? purchaseOrders 
     : purchaseOrders.filter(order => order.status === selectedStatusFilter);
-
-  // Calculate total parts to purchase
-  const partsNeeded = purchaseOrders.reduce((acc, order) => {
-    if (order.commercialProposal?.equipment) {
-      order.commercialProposal.equipment.forEach(item => {
-        if (!acc[item.articleNumber]) {
-          acc[item.articleNumber] = {
-            name: item.name,
-            quantity: 0,
-            price: item.price
+  
+  // Calculate parts needed across all orders
+  const partsNeeded: Record<string, { 
+    name: string, 
+    articleNumber: string,
+    quantity: number,
+    price: number,
+    supplier?: string
+  }> = {};
+  
+  filteredOrders.forEach(order => {
+    if (order.commercialProposal) {
+      order.commercialProposal.equipment.forEach(part => {
+        if (partsNeeded[part.articleNumber]) {
+          partsNeeded[part.articleNumber].quantity += part.quantity;
+        } else {
+          partsNeeded[part.articleNumber] = {
+            name: part.name,
+            articleNumber: part.articleNumber,
+            quantity: part.quantity,
+            price: part.price,
+            supplier: part.supplier
           };
         }
-        acc[item.articleNumber].quantity += item.quantity;
       });
     }
-    return acc;
-  }, {} as Record<string, { name: string; quantity: number; price: number }>);
+  });
   
   const totalItems = Object.values(partsNeeded).reduce((acc, item) => acc + item.quantity, 0);
   const totalCost = Object.values(partsNeeded).reduce((acc, item) => acc + (item.price * item.quantity), 0);
   
-  const handleStatusChange = (orderId: string, newStatus: string) => {
+  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
     updateOrderStatus(orderId, newStatus);
     toast({
       title: "Статус обновлен",
-      description: `Заказ #${orderId} переведен в статус "${newStatus}"`,
+      description: `Статус заказа изменен на: ${newStatus.replace(/_/g, " ")}`,
     });
   };
   
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50">
       <Header title="Панель бухгалтера" />
-
+      
       <main className="container mx-auto px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-        >
-          {/* Финансовая сводка */}
-          <Card className="bg-white dark:bg-gray-800 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <DollarSign className="mr-2 h-4 w-4 text-green-500" />
-                Финансовая сводка
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="bg-white shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-medium">
+                <div className="flex items-center">
+                  <ShoppingCart className="mr-2 h-5 w-5 text-blue-500" />
+                  Заказы в обработке
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {totalCost.toFixed(2)} ₽
-              </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Общая стоимость закупок
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Запчасти */}
-          <Card className="bg-white dark:bg-gray-800 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Database className="mr-2 h-4 w-4 text-blue-500" />
-                Запчасти
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {totalItems}
-              </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Общее количество запчастей для закупки
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Заказы на закупку */}
-          <Card className="bg-white dark:bg-gray-800 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <FileText className="mr-2 h-4 w-4 text-indigo-500" />
-                Заказы на закупку
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              <div className="text-2xl font-bold">
                 {purchaseOrders.length}
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Количество заказов на закупку
+              <p className="text-sm text-gray-500">
+                требуют действий бухгалтерии
               </p>
             </CardContent>
           </Card>
-
-          {/* Исполнители */}
-          <Card className="bg-white dark:bg-gray-800 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Users className="mr-2 h-4 w-4 text-purple-500" />
-                Исполнители
+          
+          <Card className="bg-white shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-medium">
+                <div className="flex items-center">
+                  <Package className="mr-2 h-5 w-5 text-orange-500" />
+                  Необходимо деталей
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {new Set(purchaseOrders.map(order => order.responsibleEmployee).filter(Boolean)).size}
+              <div className="text-2xl font-bold">
+                {totalItems}
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Количество ответственных исполнителей
+              <p className="text-sm text-gray-500">
+                общее количество комплектующих
               </p>
             </CardContent>
           </Card>
-        </motion.div>
-
-        {/* Список заказов на закупку */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <Card className="border bg-white dark:bg-gray-800">
-            <CardHeader>
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <CardTitle>Заказы на закупку</CardTitle>
-                  <CardDescription>
-                    Управление заказами, требующими закупки запчастей
-                  </CardDescription>
+          
+          <Card className="bg-white shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-medium">
+                <div className="flex items-center">
+                  <ArrowUp className="mr-2 h-5 w-5 text-green-500" />
+                  Общая стоимость
                 </div>
-                
-                <Select
-                  value={selectedStatusFilter}
-                  onValueChange={setSelectedStatusFilter}
-                >
-                  <SelectTrigger className="w-full md:w-[240px]">
-                    <div className="flex items-center">
-                      <ArrowDown className="mr-2 h-4 w-4 text-gray-500" />
-                      <SelectValue placeholder="Фильтр по статусу" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Все статусы</SelectItem>
-                    {purchaseStatuses.map((status) => (
-                      <SelectItem key={status} value={status}>{status}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                ${totalCost.toFixed(2)}
               </div>
-            </CardHeader>
-            <CardContent>
-              {filteredOrders.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID заказа</TableHead>
-                        <TableHead>Клиент</TableHead>
-                        <TableHead>Исполнитель</TableHead>
-                        <TableHead>Требуемые запчасти</TableHead>
-                        <TableHead>Текущий статус</TableHead>
-                        <TableHead>Действия</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredOrders.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">{order.id}</TableCell>
-                          <TableCell>{order.clientName}</TableCell>
-                          <TableCell>{order.responsibleEmployee || "Не назначен"}</TableCell>
-                          <TableCell>
-                            {order.commercialProposal?.equipment?.length || 0} наименований
-                          </TableCell>
-                          <TableCell>{order.status}</TableCell>
-                          <TableCell>
-                            <Select
-                              value={order.status}
-                              onValueChange={(value) => handleStatusChange(order.id, value)}
-                            >
-                              <SelectTrigger className="w-[200px]">
-                                <SelectValue placeholder="Изменить статус" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {purchaseStatuses.map((status) => (
-                                  <SelectItem key={status} value={status}>{status}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Нет заказов, требующих закупки</p>
-                </div>
-              )}
+              <p className="text-sm text-gray-500">
+                стоимость всех деталей
+              </p>
             </CardContent>
           </Card>
-        </motion.div>
-
-        {/* Список запчастей для закупки */}
+        </div>
+        
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 className="text-xl font-semibold">Заказы для закупки</h2>
+            
+            <Select
+              value={selectedStatusFilter}
+              onValueChange={setSelectedStatusFilter}
+            >
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Фильтр по статусу" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все статусы</SelectItem>
+                {purchaseStatuses.map(status => (
+                  <SelectItem key={status} value={status}>
+                    {status.replace(/_/g, " ")}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white shadow-sm rounded-lg overflow-hidden"
         >
-          <Card className="border bg-white dark:bg-gray-800">
-            <CardHeader>
-              <CardTitle>Запчасти для закупки</CardTitle>
-              <CardDescription>
-                Список всех запчастей, требуемых для текущих заказов
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {Object.keys(partsNeeded).length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Наименование</TableHead>
-                        <TableHead>Артикул</TableHead>
-                        <TableHead className="text-right">Количество</TableHead>
-                        <TableHead className="text-right">Цена за ед.</TableHead>
-                        <TableHead className="text-right">Общая стоимость</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.entries(partsNeeded).map(([articleNumber, details]) => (
-                        <TableRow key={articleNumber}>
-                          <TableCell className="font-medium">{details.name}</TableCell>
-                          <TableCell className="font-mono">{articleNumber}</TableCell>
-                          <TableCell className="text-right">{details.quantity}</TableCell>
-                          <TableCell className="text-right">{details.price.toFixed(2)} ₽</TableCell>
-                          <TableCell className="text-right">{(details.quantity * details.price).toFixed(2)} ₽</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                    <tfoot>
-                      <tr className="bg-gray-50">
-                        <td colSpan={2} className="py-3 px-4 font-medium">Итого:</td>
-                        <td className="py-3 px-4 text-right font-medium">{totalItems}</td>
-                        <td colSpan={2} className="py-3 px-4 text-right font-medium">{totalCost.toFixed(2)} ₽</td>
-                      </tr>
-                    </tfoot>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Нет запчастей для закупки</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <Table>
+            <TableCaption>
+              {filteredOrders.length === 0 ? 
+                "Нет заказов, требующих закупки деталей." : 
+                `Список из ${filteredOrders.length} заказов для закупки.`}
+            </TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID заказа</TableHead>
+                <TableHead>Клиент</TableHead>
+                <TableHead>Кол-во деталей</TableHead>
+                <TableHead className="text-right">Стоимость</TableHead>
+                <TableHead>Текущий статус</TableHead>
+                <TableHead className="text-right">Действия</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredOrders.map(order => {
+                const parts = order.commercialProposal?.equipment || [];
+                const partCount = parts.reduce((sum, part) => sum + part.quantity, 0);
+                const orderCost = parts.reduce((sum, part) => sum + (part.price * part.quantity), 0);
+                
+                return (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">{order.id}</TableCell>
+                    <TableCell>{order.clientName}</TableCell>
+                    <TableCell>{partCount}</TableCell>
+                    <TableCell className="text-right">${orderCost.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Select
+                        value={order.status}
+                        onValueChange={(value) => handleStatusChange(order.id, value as OrderStatus)}
+                      >
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Изменить статус" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {purchaseStatuses.map(status => (
+                            <SelectItem key={status} value={status}>
+                              {status.replace(/_/g, " ")}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleStatusChange(order.id, OrderStatus.READY_FOR_DEVELOPMENT)}
+                      >
+                        <TruckIcon className="mr-2 h-4 w-4" />
+                        Завершить закупку
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </motion.div>
+        
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-6">Список необходимых деталей</h2>
+          
+          {Object.keys(partsNeeded).length === 0 ? (
+            <div className="text-center py-8 bg-white rounded-lg shadow-sm">
+              <p className="text-gray-500">Нет деталей для закупки.</p>
+            </div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="bg-white shadow-sm rounded-lg overflow-hidden"
+            >
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Наименование</TableHead>
+                    <TableHead>Артикул</TableHead>
+                    <TableHead>Поставщик</TableHead>
+                    <TableHead className="text-right">Количество</TableHead>
+                    <TableHead className="text-right">Цена за ед.</TableHead>
+                    <TableHead className="text-right">Итого</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.values(partsNeeded).map((part) => (
+                    <TableRow key={part.articleNumber}>
+                      <TableCell>{part.name}</TableCell>
+                      <TableCell className="font-mono text-sm">{part.articleNumber}</TableCell>
+                      <TableCell>{part.supplier || "Не указан"}</TableCell>
+                      <TableCell className="text-right">{part.quantity}</TableCell>
+                      <TableCell className="text-right">${part.price.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-medium">${(part.price * part.quantity).toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </motion.div>
+          )}
+        </div>
       </main>
     </div>
   );

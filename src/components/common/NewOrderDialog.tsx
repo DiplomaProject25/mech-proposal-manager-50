@@ -61,7 +61,7 @@ const NewOrderDialog: React.FC<NewOrderDialogProps> = ({ isOpen, onClose }) => {
     createOrder({
       clientName: clientName.trim(),
       description: description.trim(),
-      assignedTo: responsibleEmployee.trim() || undefined,
+      responsibleEmployee: responsibleEmployee.trim() || undefined,
     });
     
     // Reset form and close dialog

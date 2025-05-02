@@ -5,12 +5,13 @@ import { OrderStatus } from '@/context/OrderContext';
 import { cn } from '@/lib/utils';
 
 interface StatusBadgeProps {
-  status: OrderStatus;
+  status: OrderStatus | string;
   className?: string;
 }
 
 const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) => {
-  const statusConfig = {
+  // Define all possible statuses including the newer ones
+  const statusConfig: Record<string, { color: string, label: string }> = {
     [OrderStatus.NEW]: {
       color: 'bg-gray-100 text-gray-800 border-gray-300',
       label: 'Новый',
@@ -55,9 +56,41 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) => {
       color: 'bg-pink-100 text-pink-800 border-pink-300',
       label: 'Разгрузка',
     },
+    // Add custom statuses that might be used as strings
+    "NEED_PURCHASING": {
+      color: 'bg-amber-100 text-amber-800 border-amber-300',
+      label: 'Необходима закупка',
+    },
+    "PURCHASING_IN_PROGRESS": {
+      color: 'bg-orange-100 text-orange-800 border-orange-300',
+      label: 'Идет закупка',
+    },
+    "IN_TRANSIT": {
+      color: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+      label: 'В пути',
+    },
+    "UNLOADING": {
+      color: 'bg-pink-100 text-pink-800 border-pink-300',
+      label: 'Разгрузка',
+    },
+    "PENDING_APPROVAL": {
+      color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      label: 'Ожидает одобрения',
+    },
+    "APPROVED": {
+      color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      label: 'Одобрен',
+    },
   };
 
-  const { color, label } = statusConfig[status];
+  // Default config for unknown status
+  const defaultConfig = {
+    color: 'bg-gray-100 text-gray-800 border-gray-300',
+    label: status ? String(status).replace(/_/g, ' ') : 'Неизвестный статус',
+  };
+
+  // Use the config for the status or the default config
+  const { color, label } = statusConfig[status] || defaultConfig;
 
   return (
     <motion.span
