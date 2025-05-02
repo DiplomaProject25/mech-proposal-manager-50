@@ -26,6 +26,10 @@ export interface EquipmentPart {
   quantity: number;
   availableQuantity: number;
   location: string; // warehouse location
+  deliveryTime?: string; // Added for delivery time input
+  weight?: number; // Added for unavailable parts
+  purchasePrice?: number; // Added for unavailable parts
+  deliveryCost?: number; // Added for unavailable parts
 }
 
 // Commercial proposal interface
