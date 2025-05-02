@@ -59,12 +59,6 @@ const Sidebar = () => {
       href: '/workshop',
       forRoles: [UserRole.CONSTRUCTOR],
     },
-    {
-      title: 'Управление товарами',
-      icon: <Package size={20} />,
-      href: '/products',
-      forRoles: [UserRole.DIRECTOR],
-    },
   ];
 
   const sidebarVariants = {

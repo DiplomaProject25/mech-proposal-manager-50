@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { OrderProvider } from './context/OrderContext';
+import { AnimatePresence } from 'framer-motion';
 
 // Import components
 import Sidebar from './components/layout/Sidebar';
@@ -23,10 +24,6 @@ import Equipment from './pages/ConstructorPages/Equipment';
 import Workshop from './pages/ConstructorPages/Workshop';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
-import ProductManagement from './pages/DirectorPages/ProductManagement';
-
-// Import framer-motion for page transitions
-import { AnimatePresence } from 'framer-motion';
 
 const queryClient = new QueryClient();
 
@@ -113,12 +110,6 @@ const AppContent = () => {
             <Route path="/equipment/order/:orderId" element={
               <ProtectedRoute>
                 <EquipmentDetails />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/products" element={
-              <ProtectedRoute>
-                <ProductManagement />
               </ProtectedRoute>
             } />
             

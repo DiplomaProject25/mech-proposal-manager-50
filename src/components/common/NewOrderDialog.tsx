@@ -31,8 +31,8 @@ const NewOrderDialog: React.FC<NewOrderDialogProps> = ({ isOpen, onClose }) => {
     
     if (!clientName.trim()) {
       toast({
-        title: 'Error',
-        description: 'Client name is required',
+        title: 'Ошибка',
+        description: 'Название клиента обязательно для заполнения',
         variant: 'destructive',
       });
       return;
@@ -40,8 +40,8 @@ const NewOrderDialog: React.FC<NewOrderDialogProps> = ({ isOpen, onClose }) => {
     
     if (!description.trim()) {
       toast({
-        title: 'Error',
-        description: 'Order description is required',
+        title: 'Ошибка',
+        description: 'Описание заказа обязательно для заполнения',
         variant: 'destructive',
       });
       return;
@@ -68,22 +68,22 @@ const NewOrderDialog: React.FC<NewOrderDialogProps> = ({ isOpen, onClose }) => {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create New Order</DialogTitle>
+          <DialogTitle>Создать новый заказ</DialogTitle>
           <DialogDescription>
-            Enter the client information and order details.
+            Введите информацию о клиенте и детали заказа.
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
             <label htmlFor="clientName" className="text-sm font-medium">
-              Client Name
+              Название клиента
             </label>
             <Input
               id="clientName"
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
-              placeholder="Enter client name"
+              placeholder="Введите название клиента"
               className="w-full"
               disabled={loading}
             />
@@ -91,13 +91,13 @@ const NewOrderDialog: React.FC<NewOrderDialogProps> = ({ isOpen, onClose }) => {
           
           <div className="space-y-2">
             <label htmlFor="description" className="text-sm font-medium">
-              Order Description
+              Описание заказа
             </label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter detailed order description"
+              placeholder="Введите подробное описание заказа"
               className="w-full min-h-[100px]"
               disabled={loading}
             />
@@ -110,10 +110,10 @@ const NewOrderDialog: React.FC<NewOrderDialogProps> = ({ isOpen, onClose }) => {
               onClick={handleClose}
               disabled={loading}
             >
-              Cancel
+              Отмена
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Order'}
+              {loading ? 'Создание...' : 'Создать заказ'}
             </Button>
           </DialogFooter>
         </form>

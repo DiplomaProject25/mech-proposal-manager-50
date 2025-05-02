@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { OrderStatus } from '@/context/OrderContext';
@@ -37,6 +38,10 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) => {
     [OrderStatus.PURCHASING]: {
       color: 'bg-orange-100 text-orange-800 border-orange-300',
       label: 'Закупка',
+    },
+    [OrderStatus.NEED_PURCHASING]: {
+      color: 'bg-amber-100 text-amber-800 border-amber-300',
+      label: 'Необходима закупка',
     },
     [OrderStatus.COMPLETED]: {
       color: 'bg-emerald-100 text-emerald-800 border-emerald-300',

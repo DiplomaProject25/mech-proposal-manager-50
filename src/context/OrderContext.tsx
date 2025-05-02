@@ -11,7 +11,8 @@ export enum OrderStatus {
   READY_FOR_DEVELOPMENT = 'готов_к_разработке',
   IN_PROGRESS = 'в_процессе',
   ASSEMBLY = 'сборка',
-  PURCHASING = 'закупка',
+  PURCHASING = 'закупка', 
+  NEED_PURCHASING = 'необходима_закупка', // New status
   COMPLETED = 'завершен'
 }
 
@@ -35,6 +36,7 @@ export interface CommercialProposal {
   totalCost: number;
   createdAt: Date;
   responsibleEmployee?: string; // Name of the responsible employee
+  showPrices?: boolean; // Control visibility of prices
 }
 
 // Order interface
@@ -70,6 +72,7 @@ interface OrderContextType {
   assignResponsibleEmployee: (orderId: string, employeeName: string) => void;
   addNewEquipment: (equipment: Omit<EquipmentPart, 'id'>) => void;
   getEmployeeList: () => string[];
+  toggleProposalPrices: (orderId: string, show: boolean) => void;
 }
 
 // Create context
@@ -168,7 +171,8 @@ const MOCK_ORDERS: Order[] = [
       markup: 15,
       totalCost: 4255, // (1200 + 2500) * 1.15
       createdAt: new Date(2023, 6, 20),
-      responsibleEmployee: 'Петров П.П.'
+      responsibleEmployee: 'Петров П.П.',
+      showPrices: false
     },
     createdAt: new Date(2023, 6, 18),
     updatedAt: new Date(2023, 6, 20)
@@ -187,7 +191,8 @@ const MOCK_ORDERS: Order[] = [
       markup: 20,
       totalCost: 1920, // (450*2 + 150*4 + 850) * 1.2
       createdAt: new Date(2023, 6, 25),
-      responsibleEmployee: 'Сидоров С.С.'
+      responsibleEmployee: 'Сидоров С.С.',
+      showPrices: false
     },
     createdAt: new Date(2023, 6, 22),
     updatedAt: new Date(2023, 6, 26)
@@ -290,6 +295,36 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  // Toggle proposal prices visibility
+  const toggleProposalPrices = (orderId: string, show: boolean) => {
+    setLoading(true);
+    try {
+      setOrders(prevOrders => 
+        prevOrders.map(order => {
+          if (order.id === orderId && order.commercialProposal) {
+            return {
+              ...order,
+              commercialProposal: {
+                ...order.commercialProposal,
+                showPrices: show
+              }
+            };
+          }
+          return order;
+        })
+      );
+    } catch (err) {
+      setError('Не удалось обновить отображение цен');
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось обновить отображение цен',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Create commercial proposal
   const createCommercialProposal = (orderId: string, selectedEquipment: EquipmentPart[], markup: number, responsibleEmployee: string = '') => {
     setLoading(true);
@@ -308,7 +343,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         markup,
         totalCost,
         createdAt: new Date(),
-        responsibleEmployee: responsibleEmployee || null
+        responsibleEmployee: responsibleEmployee || null,
+        showPrices: false
       };
       
       setOrders(prevOrders => 
@@ -418,14 +454,20 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       proposal.equipment.forEach((item, index) => {
         content += `${index + 1}. ${item.name} (${item.articleNumber})\n`;
         content += `   Количество: ${item.quantity}\n`;
-        content += `   Цена за единицу: $${item.price.toFixed(2)}\n`;
-        content += `   Подитог: $${(item.price * item.quantity).toFixed(2)}\n\n`;
+        if (proposal.showPrices) {
+          content += `   Цена за единицу: $${item.price.toFixed(2)}\n`;
+          content += `   Подитог: $${(item.price * item.quantity).toFixed(2)}\n\n`;
+        } else {
+          content += `   \n`;
+        }
       });
       
       content += `-------------------------------------\n`;
-      content += `Подитог: $${(proposal.totalCost / (1 + proposal.markup / 100)).toFixed(2)}\n`;
-      content += `Наценка: ${proposal.markup}%\n`;
-      content += `ИТОГО: $${proposal.totalCost.toFixed(2)}\n\n`;
+      if (proposal.showPrices) {
+        content += `Подитог: $${(proposal.totalCost / (1 + proposal.markup / 100)).toFixed(2)}\n`;
+        content += `Наценка: ${proposal.markup}%\n`;
+        content += `ИТОГО: $${proposal.totalCost.toFixed(2)}\n\n`;
+      }
       content += `=====================================\n`;
       content += `Благодарим за сотрудничество!\n`;
       
@@ -491,12 +533,18 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               <th style="padding: 8px; text-align: center;">№</th>
               <th style="padding: 8px; text-align: center;">Наименование</th>
               <th style="padding: 8px; text-align: center;">Кол-во</th>
+      `;
+      
+      if (proposal.showPrices) {
+        htmlContent += `
               <th style="padding: 8px; text-align: center;">Цена за ед. без НДС ($)</th>
               <th style="padding: 8px; text-align: center;">Сумма без НДС ($)</th>
               <th style="padding: 8px; text-align: center;">НДС 20% ($)</th>
               <th style="padding: 8px; text-align: center;">Сумма с НДС ($)</th>
-            </tr>
-      `;
+        `;
+      }
+      
+      htmlContent += `</tr>`;
       
       let subtotalWithoutVAT = 0;
       
@@ -512,29 +560,41 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             <td style="padding: 8px; text-align: center;">${index + 1}</td>
             <td style="padding: 8px;">${item.name} (${item.articleNumber})</td>
             <td style="padding: 8px; text-align: center;">${item.quantity}</td>
+        `;
+        
+        if (proposal.showPrices) {
+          htmlContent += `
             <td style="padding: 8px; text-align: right;">${item.price.toFixed(2)}</td>
             <td style="padding: 8px; text-align: right;">${itemTotal.toFixed(2)}</td>
             <td style="padding: 8px; text-align: right;">${vat.toFixed(2)}</td>
             <td style="padding: 8px; text-align: right;">${totalWithVAT.toFixed(2)}</td>
-          </tr>
-        `;
+          `;
+        }
+        
+        htmlContent += `</tr>`;
       });
       
-      const totalVAT = subtotalWithoutVAT * 0.2;
-      const totalWithVAT = subtotalWithoutVAT + totalVAT;
-      
-      htmlContent += `
+      if (proposal.showPrices) {
+        const totalVAT = subtotalWithoutVAT * 0.2;
+        const totalWithVAT = subtotalWithoutVAT + totalVAT;
+        
+        htmlContent += `
           <tr style="font-weight: bold; background-color: #f2f2f2;">
             <td colspan="4" style="padding: 8px; text-align: right;">Итого:</td>
             <td style="padding: 8px; text-align: right;">${subtotalWithoutVAT.toFixed(2)}</td>
             <td style="padding: 8px; text-align: right;">${totalVAT.toFixed(2)}</td>
             <td style="padding: 8px; text-align: right;">${totalWithVAT.toFixed(2)}</td>
           </tr>
-        </table>
+        `;
         
-        <p><b>Наценка:</b> ${proposal.markup}%</p>
-        <p><b>ИТОГО с наценкой и НДС:</b> $${(totalWithVAT * (1 + proposal.markup / 100)).toFixed(2)}</p>
-      `;
+        htmlContent += `
+          </table>
+          <p><b>Наценка:</b> ${proposal.markup}%</p>
+          <p><b>ИТОГО с наценкой и НДС:</b> $${(totalWithVAT * (1 + proposal.markup / 100)).toFixed(2)}</p>
+        `;
+      } else {
+        htmlContent += `</table>`;
+      }
       
       if (proposal.responsibleEmployee) {
         htmlContent += `<p><b>Ответственный сотрудник:</b> ${proposal.responsibleEmployee}</p>`;
@@ -673,7 +733,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         downloadProposalAsWord,
         assignResponsibleEmployee,
         addNewEquipment,
-        getEmployeeList
+        getEmployeeList,
+        toggleProposalPrices
       }}
     >
       {children}
