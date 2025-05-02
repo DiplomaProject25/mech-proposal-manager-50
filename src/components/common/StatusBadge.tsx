@@ -7,11 +7,14 @@ import { cn } from '@/lib/utils';
 interface StatusBadgeProps {
   status: OrderStatus | string;
   className?: string;
+  hideIcon?: boolean;
+  hideLabel?: boolean;
 }
 
-const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) => {
-  // Define all possible statuses including the newer ones
+const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className, hideIcon = false, hideLabel = false }) => {
+  // Define all possible statuses with unique keys
   const statusConfig: Record<string, { color: string, label: string }> = {
+    // OrderStatus enum values
     [OrderStatus.NEW]: {
       color: 'bg-gray-100 text-gray-800 border-gray-300',
       label: 'Новый',
@@ -56,7 +59,8 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) => {
       color: 'bg-pink-100 text-pink-800 border-pink-300',
       label: 'Разгрузка',
     },
-    // String-based statuses - using different keys to avoid duplicates
+    
+    // String-based statuses - using unique string keys
     'string_новый': {
       color: 'bg-gray-100 text-gray-800 border-gray-300',
       label: 'Новый',
@@ -101,27 +105,27 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) => {
       color: 'bg-pink-100 text-pink-800 border-pink-300',
       label: 'Разгрузка',
     },
-    "string_NEED_PURCHASING": {
+    'string_NEED_PURCHASING': {
       color: 'bg-amber-100 text-amber-800 border-amber-300',
       label: 'Необходима закупка',
     },
-    "string_PURCHASING_IN_PROGRESS": {
+    'string_PURCHASING_IN_PROGRESS': {
       color: 'bg-orange-100 text-orange-800 border-orange-300',
       label: 'Идет закупка',
     },
-    "string_IN_TRANSIT": {
+    'string_IN_TRANSIT': {
       color: 'bg-indigo-100 text-indigo-800 border-indigo-300',
       label: 'В пути',
     },
-    "string_UNLOADING": {
+    'string_UNLOADING': {
       color: 'bg-pink-100 text-pink-800 border-pink-300',
       label: 'Разгрузка',
     },
-    "string_PENDING_APPROVAL": {
+    'string_PENDING_APPROVAL': {
       color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
       label: 'Ожидает одобрения',
     },
-    "string_APPROVED": {
+    'string_APPROVED': {
       color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
       label: 'Одобрен',
     },
@@ -174,8 +178,8 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) => {
         className
       )}
     >
-      <span className={`w-2 h-2 rounded-full mr-1.5 ${color.split(' ')[0].replace('bg-', 'bg-')}`}></span>
-      {label}
+      {!hideIcon && <span className={`w-2 h-2 rounded-full mr-1.5 ${color.split(' ')[0].replace('bg-', 'bg-')}`}></span>}
+      {!hideLabel && label}
     </motion.span>
   );
 };

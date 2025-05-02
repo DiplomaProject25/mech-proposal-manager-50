@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, FileText, User, Calendar, Calculator, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, FileText, User, Calendar, Calculator, ShoppingCart, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -132,7 +132,6 @@ const OrderDetails = () => {
                     
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Статус заказа</label>
                         <div className="flex flex-wrap gap-2">
                           {order.status === OrderStatus.NEW && (
                             <Button
@@ -177,7 +176,6 @@ const OrderDetails = () => {
                                 <ShoppingCart className="mr-1 h-4 w-4" />
                                 Необходима закупка
                               </Button>
-                              <span className="text-green-700">Заказ готов к разработке.</span>
                             </>
                           )}
                         </div>
@@ -188,28 +186,30 @@ const OrderDetails = () => {
               </div>
               
               <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-medium mb-3">Коммерческое предложение</h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium">Коммерческое предложение</h3>
+                  {order.commercialProposal && (
+                    <Button variant="outline" className="flex items-center">
+                      <Download className="mr-1 h-4 w-4" />
+                      Скачать в Word
+                    </Button>
+                  )}
+                </div>
                 
                 {order.commercialProposal ? (
-                  <div>
-                    <div className="mb-4">
-                      <p className="text-sm text-gray-700">
-                        Предложение создано: {new Date(order.commercialProposal.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    
-                    <div className="mb-4 overflow-x-auto">
+                  <div className="bg-white rounded-md border border-gray-200 overflow-hidden">
+                    <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
-                          <tr className="border-b border-gray-200">
+                          <tr className="bg-gray-50 border-b border-gray-200">
                             <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Наименование
                             </th>
                             <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Артикул
                             </th>
-                            <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Количество
+                            <th className="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Кол-во
                             </th>
                             {order.commercialProposal.showPrices && (
                               <>
@@ -217,22 +217,22 @@ const OrderDetails = () => {
                                   Цена
                                 </th>
                                 <th className="py-3 px-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Итого
+                                  Сумма
                                 </th>
                               </>
                             )}
                           </tr>
                         </thead>
                         <tbody>
-                          {order.commercialProposal.equipment.map((item) => (
-                            <tr key={item.id} className="border-b border-gray-100">
+                          {order.commercialProposal.equipment.map((item, index) => (
+                            <tr key={item.id} className={index % 2 === 0 ? '' : 'bg-gray-50'}>
                               <td className="py-3 px-4">
                                 {item.name}
                               </td>
                               <td className="py-3 px-4 font-mono text-sm">
                                 {item.articleNumber}
                               </td>
-                              <td className="py-3 px-4 text-right">
+                              <td className="py-3 px-4 text-center">
                                 {item.quantity}
                               </td>
                               {order.commercialProposal.showPrices && (
@@ -250,17 +250,35 @@ const OrderDetails = () => {
                         </tbody>
                         {order.commercialProposal.showPrices && (
                           <tfoot>
-                            <tr className="bg-gray-50">
+                            <tr>
+                              <td colSpan={3} className="py-3 px-4 text-right font-medium">
+                                Подытог:
+                              </td>
+                              <td colSpan={2} className="py-3 px-4 text-right font-medium">
+                                ${order.commercialProposal.equipment.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2)}
+                              </td>
+                            </tr>
+                            <tr>
                               <td colSpan={3} className="py-3 px-4 text-right font-medium">
                                 Наценка ({order.commercialProposal.markup}%):
                               </td>
                               <td colSpan={2} className="py-3 px-4 text-right font-medium">
-                                ${(order.commercialProposal.totalCost - (order.commercialProposal.totalCost / (1 + order.commercialProposal.markup / 100))).toFixed(2)}
+                                ${(order.commercialProposal.equipment.reduce((total, item) => total + item.price * item.quantity, 0) * order.commercialProposal.markup / 100).toFixed(2)}
                               </td>
                             </tr>
-                            <tr className="bg-gray-50 font-semibold">
+                            {order.commercialProposal.companyMarkup && (
+                              <tr>
+                                <td colSpan={3} className="py-3 px-4 text-right font-medium">
+                                  Наценка для предприятия ({order.commercialProposal.companyMarkup}%):
+                                </td>
+                                <td colSpan={2} className="py-3 px-4 text-right font-medium">
+                                  ${(order.commercialProposal.equipment.reduce((total, item) => total + item.price * item.quantity, 0) * (order.commercialProposal.companyMarkup / 100)).toFixed(2)}
+                                </td>
+                              </tr>
+                            )}
+                            <tr className="bg-gray-50 font-bold">
                               <td colSpan={3} className="py-3 px-4 text-right">
-                                Всего:
+                                Итого:
                               </td>
                               <td colSpan={2} className="py-3 px-4 text-right">
                                 ${order.commercialProposal.totalCost.toFixed(2)}
@@ -271,7 +289,7 @@ const OrderDetails = () => {
                       </table>
                     </div>
                     
-                    <div className="flex space-x-2">
+                    <div className="flex p-4">
                       {!order.commercialProposal.showPrices && (
                         <Button 
                           onClick={handleCalculatePrices}

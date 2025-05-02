@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Trash, ChevronLeft, FileText, Calculator } from 'lucide-react';
+import { Plus, Trash, ChevronLeft, FileText, Calculator, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,23 +10,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { useOrders, OrderStatus, EquipmentPart } from '@/context/OrderContext';
+import { useOrders, OrderStatus } from '@/context/OrderContext';
 import Header from '@/components/layout/Header';
-import { PartsCatalog } from '@/components/commercial/PartsCatalog';
-
-// Part interface
-interface Part {
-  id: string;
-  name: string;
-  articleNumber: string;
-  price: number;
-  quantity: number;
-}
+import { PartsCatalog, EquipmentPart } from '@/components/commercial/PartsCatalog';
 
 interface ProposalForm {
   orderId: string;
-  responsibleEmployee: string;
   tax: number;
+  companyMarkup: number;
   markup: number;
   selectedParts: EquipmentPart[];
   totalCost: number;
@@ -35,15 +27,14 @@ interface ProposalForm {
 const CommercialProposal = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
-  const { getOrderById, createCommercialProposal, getEmployeeList } = useOrders();
+  const { getOrderById, createCommercialProposal } = useOrders();
   const { toast } = useToast();
-  const employeeList = getEmployeeList();
   
   const [form, setForm] = useState<ProposalForm>({
     orderId: orderId || '',
-    responsibleEmployee: '',
     tax: 20,
     markup: 15,
+    companyMarkup: 10, // New field for company markup
     selectedParts: [],
     totalCost: 0,
     status: OrderStatus.PROPOSAL_CREATED,
@@ -58,10 +49,10 @@ const CommercialProposal = () => {
     // If order already has a proposal, populate the form with it
     setForm({
       orderId: order.id,
-      responsibleEmployee: order.commercialProposal.responsibleEmployee || '',
       // Since tax isn't on the CommercialProposal type, use default value
       tax: 20,
       markup: order.commercialProposal.markup || 15,
+      companyMarkup: order.commercialProposal.companyMarkup || 10,
       selectedParts: [...order.commercialProposal.equipment],
       totalCost: order.commercialProposal.totalCost || 0,
       status: order.status as OrderStatus,
@@ -106,6 +97,15 @@ const CommercialProposal = () => {
     }));
   };
 
+  const handleDeliveryTimeChange = (articleNumber: string, deliveryTime: string) => {
+    setForm(prevForm => ({
+      ...prevForm,
+      selectedParts: prevForm.selectedParts.map(part => 
+        part.articleNumber === articleNumber ? { ...part, deliveryTime } : part
+      )
+    }));
+  };
+
   const calculateTotal = () => {
     // Calculate subtotal of parts
     const subtotal = form.selectedParts.reduce(
@@ -113,14 +113,15 @@ const CommercialProposal = () => {
       0
     );
     
-    // Apply markup
+    // Apply markups
     const markupAmount = subtotal * (form.markup / 100);
+    const companyMarkupAmount = subtotal * (form.companyMarkup / 100);
     
     // Calculate tax
-    const taxAmount = (subtotal + markupAmount) * (form.tax / 100);
+    const taxAmount = (subtotal + markupAmount + companyMarkupAmount) * (form.tax / 100);
     
     // Final total
-    const total = subtotal + markupAmount + taxAmount;
+    const total = subtotal + markupAmount + companyMarkupAmount + taxAmount;
     
     setForm(prevForm => ({
       ...prevForm,
@@ -145,12 +146,13 @@ const CommercialProposal = () => {
       return;
     }
     
-    // Using createCommercialProposal instead of createProposal, which matches the OrderContext
+    // Using createCommercialProposal
     createCommercialProposal(
       form.orderId,
       form.selectedParts,
       form.markup,
-      form.responsibleEmployee,
+      '', // responsibleEmployee is now empty as per requirements
+      form.companyMarkup // adding company markup
     );
     
     navigate(`/orders/${form.orderId}`);
@@ -206,7 +208,7 @@ const CommercialProposal = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                   <div>
                     <Label htmlFor="clientName">Клиент</Label>
                     <Input 
@@ -215,23 +217,6 @@ const CommercialProposal = () => {
                       disabled 
                       className="bg-gray-50"
                     />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="responsibleEmployee">Ответственный исполнитель</Label>
-                    <Select 
-                      value={form.responsibleEmployee} 
-                      onValueChange={(value) => setForm(prev => ({ ...prev, responsibleEmployee: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Выберите ответственного" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {employeeList.map((employee) => (
-                          <SelectItem key={employee} value={employee}>{employee}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
                 
@@ -262,6 +247,21 @@ const CommercialProposal = () => {
                     />
                   </div>
 
+                  <div>
+                    <Label htmlFor="companyMarkup">Наценка для предприятия (%)</Label>
+                    <Input
+                      id="companyMarkup"
+                      name="companyMarkup"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={form.companyMarkup}
+                      onChange={handleNumberInputChange}
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                   <div>
                     <Label htmlFor="status">Статус заказа</Label>
                     <Select onValueChange={(value) => handleStatusChange(value as OrderStatus)} defaultValue={form.status}>
@@ -300,6 +300,7 @@ const CommercialProposal = () => {
                           <TableHead>Артикул</TableHead>
                           <TableHead>Количество</TableHead>
                           <TableHead>Цена</TableHead>
+                          <TableHead>Срок доставки</TableHead>
                           <TableHead>Итого</TableHead>
                           <TableHead></TableHead>
                         </TableRow>
@@ -307,7 +308,7 @@ const CommercialProposal = () => {
                       <TableBody>
                         {form.selectedParts.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center text-gray-500 py-8">
+                            <TableCell colSpan={7} className="text-center text-gray-500 py-8">
                               Нет выбранных деталей. Нажмите "Добавить", чтобы выбрать детали из каталога.
                             </TableCell>
                           </TableRow>
@@ -326,6 +327,17 @@ const CommercialProposal = () => {
                                 />
                               </TableCell>
                               <TableCell>${part.price.toFixed(2)}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center">
+                                  <Clock className="h-4 w-4 text-gray-400 mr-2" />
+                                  <Input
+                                    placeholder="7-10 дней"
+                                    value={part.deliveryTime || ''}
+                                    onChange={(e) => handleDeliveryTimeChange(part.articleNumber, e.target.value)}
+                                    className="w-28"
+                                  />
+                                </div>
+                              </TableCell>
                               <TableCell>${(part.price * part.quantity).toFixed(2)}</TableCell>
                               <TableCell>
                                 <Button
@@ -345,7 +357,7 @@ const CommercialProposal = () => {
                   </div>
                 </div>
                 
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-start">
                   <Button 
                     type="button" 
                     onClick={calculateTotal}
@@ -356,9 +368,29 @@ const CommercialProposal = () => {
                     Рассчитать стоимость
                   </Button>
                   
-                  <div className="text-right">
-                    <div className="text-sm text-gray-500 mb-1">Итоговая стоимость:</div>
-                    <div className="text-2xl font-semibold">${form.totalCost.toFixed(2)}</div>
+                  <div className="text-right space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500 mr-8">Подытог:</span>
+                      <span className="font-medium">${form.selectedParts.reduce((total, item) => total + (item.price * item.quantity), 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500 mr-8">Наценка ({form.markup}%):</span>
+                      <span className="font-medium">${(form.selectedParts.reduce((total, item) => total + (item.price * item.quantity), 0) * (form.markup / 100)).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500 mr-8">Наценка для предприятия ({form.companyMarkup}%):</span>
+                      <span className="font-medium">${(form.selectedParts.reduce((total, item) => total + (item.price * item.quantity), 0) * (form.companyMarkup / 100)).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500 mr-8">НДС ({form.tax}%):</span>
+                      <span className="font-medium">${((form.selectedParts.reduce((total, item) => total + (item.price * item.quantity), 0) * (1 + form.markup / 100 + form.companyMarkup / 100)) * (form.tax / 100)).toFixed(2)}</span>
+                    </div>
+                    <div className="pt-2 border-t border-gray-200">
+                      <div className="flex justify-between">
+                        <span className="text-md font-semibold mr-8">Итого с НДС:</span>
+                        <span className="text-xl font-semibold">${form.totalCost.toFixed(2)}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
