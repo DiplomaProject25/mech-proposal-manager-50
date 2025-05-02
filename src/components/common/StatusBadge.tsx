@@ -56,72 +56,72 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) => {
       color: 'bg-pink-100 text-pink-800 border-pink-300',
       label: 'Разгрузка',
     },
-    // Add custom statuses that might be used as strings
-    'новый': {
+    // String-based statuses - using different keys to avoid duplicates
+    'string_новый': {
       color: 'bg-gray-100 text-gray-800 border-gray-300',
       label: 'Новый',
     },
-    'предложение_создано': {
+    'string_предложение_создано': {
       color: 'bg-blue-100 text-blue-800 border-blue-300',
       label: 'Предложение создано',
     },
-    'отклонен': {
+    'string_отклонен': {
       color: 'bg-red-100 text-red-800 border-red-300',
       label: 'Отклонен',
     },
-    'готов_к_разработке': {
+    'string_готов_к_разработке': {
       color: 'bg-green-100 text-green-800 border-green-300',
       label: 'Готов к разработке',
     },
-    'в_процессе': {
+    'string_в_процессе': {
       color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
       label: 'В процессе',
     },
-    'сборка': {
+    'string_сборка': {
       color: 'bg-purple-100 text-purple-800 border-purple-300',
       label: 'Сборка',
     },
-    'закупка': {
+    'string_закупка': {
       color: 'bg-orange-100 text-orange-800 border-orange-300',
       label: 'Закупка',
     },
-    'необходима_закупка': {
+    'string_необходима_закупка': {
       color: 'bg-amber-100 text-amber-800 border-amber-300',
       label: 'Необходима закупка',
     },
-    'завершен': {
+    'string_завершен': {
       color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
       label: 'Завершен',
     },
-    'в_пути': {
+    'string_в_пути': {
       color: 'bg-indigo-100 text-indigo-800 border-indigo-300',
       label: 'В пути',
     },
-    'разгрузка': {
+    'string_разгрузка': {
       color: 'bg-pink-100 text-pink-800 border-pink-300',
       label: 'Разгрузка',
     },
-    "NEED_PURCHASING": {
+    "string_NEED_PURCHASING": {
       color: 'bg-amber-100 text-amber-800 border-amber-300',
       label: 'Необходима закупка',
     },
-    "PURCHASING_IN_PROGRESS": {
+    "string_PURCHASING_IN_PROGRESS": {
       color: 'bg-orange-100 text-orange-800 border-orange-300',
       label: 'Идет закупка',
     },
-    "IN_TRANSIT": {
+    "string_IN_TRANSIT": {
       color: 'bg-indigo-100 text-indigo-800 border-indigo-300',
       label: 'В пути',
     },
-    "UNLOADING": {
+    "string_UNLOADING": {
       color: 'bg-pink-100 text-pink-800 border-pink-300',
       label: 'Разгрузка',
     },
-    "PENDING_APPROVAL": {
+    "string_PENDING_APPROVAL": {
       color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
       label: 'Ожидает одобрения',
     },
-    "APPROVED": {
+    "string_APPROVED": {
       color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
       label: 'Одобрен',
     },
@@ -136,15 +136,22 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) => {
   // Use the config for the status or the default config
   let config = statusConfig[status];
   
-  // If the status isn't found directly, try searching with different cases
+  // If the status isn't found directly, try searching with different cases and prefixes
   if (!config && typeof status === 'string') {
-    // Convert to lowercase for case-insensitive matching
-    const lowerStatus = status.toLowerCase();
-    const keys = Object.keys(statusConfig);
-    for (const key of keys) {
-      if (key.toLowerCase() === lowerStatus) {
-        config = statusConfig[key];
-        break;
+    // Try with string_ prefix
+    const stringKey = `string_${status}`;
+    if (statusConfig[stringKey]) {
+      config = statusConfig[stringKey];
+    } else {
+      // Convert to lowercase for case-insensitive matching
+      const lowerStatus = status.toLowerCase();
+      const keys = Object.keys(statusConfig);
+      for (const key of keys) {
+        const keyToCheck = key.startsWith('string_') ? key.substring(7).toLowerCase() : key.toLowerCase();
+        if (keyToCheck === lowerStatus) {
+          config = statusConfig[key];
+          break;
+        }
       }
     }
   }

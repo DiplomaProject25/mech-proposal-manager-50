@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -10,9 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { useOrders, OrderStatus } from '@/context/OrderContext';
+import { useOrders, OrderStatus, EquipmentPart } from '@/context/OrderContext';
 import Header from '@/components/layout/Header';
-import PartsCatalog from '@/components/commercial/PartsCatalog';
+import { PartsCatalog } from '@/components/commercial/PartsCatalog';
 
 // Part interface
 interface Part {
@@ -28,7 +27,7 @@ interface ProposalForm {
   responsibleEmployee: string;
   tax: number;
   markup: number;
-  selectedParts: Part[];
+  selectedParts: EquipmentPart[];
   totalCost: number;
   status: OrderStatus;
 }
@@ -83,7 +82,7 @@ const CommercialProposal = () => {
     setForm(prevForm => ({ ...prevForm, status }));
   };
 
-  const handlePartSelect = (parts: Part[]) => {
+  const handlePartSelect = (parts: EquipmentPart[]) => {
     setForm(prevForm => ({
       ...prevForm,
       selectedParts: [...parts]
@@ -109,7 +108,10 @@ const CommercialProposal = () => {
 
   const calculateTotal = () => {
     // Calculate subtotal of parts
-    const subtotal = form.selectedParts.reduce((sum, part) => sum + (part.price * part.quantity), 0);
+    const subtotal = form.selectedParts.reduce(
+      (total, item) => total + (item.price * item.quantity), 
+      0
+    );
     
     // Apply markup
     const markupAmount = subtotal * (form.markup / 100);
@@ -209,7 +211,7 @@ const CommercialProposal = () => {
                     <Label htmlFor="clientName">Клиент</Label>
                     <Input 
                       id="clientName" 
-                      value={order.clientName} 
+                      value={order?.clientName || ''} 
                       disabled 
                       className="bg-gray-50"
                     />
@@ -267,11 +269,11 @@ const CommercialProposal = () => {
                         <SelectValue placeholder="Выберите статус" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={OrderStatus.NEED_PURCHASING}>{OrderStatus.NEED_PURCHASING}</SelectItem>
-                        <SelectItem value={OrderStatus.PROPOSAL_CREATED}>{OrderStatus.PROPOSAL_CREATED}</SelectItem>
-                        <SelectItem value={OrderStatus.READY_FOR_DEVELOPMENT}>{OrderStatus.READY_FOR_DEVELOPMENT}</SelectItem>
-                        <SelectItem value={OrderStatus.IN_PROGRESS}>{OrderStatus.IN_PROGRESS}</SelectItem>
-                        <SelectItem value={OrderStatus.COMPLETED}>{OrderStatus.COMPLETED}</SelectItem>
+                        <SelectItem value={OrderStatus.NEED_PURCHASING}>Необходима закупка</SelectItem>
+                        <SelectItem value={OrderStatus.PROPOSAL_CREATED}>Предложение создано</SelectItem>
+                        <SelectItem value={OrderStatus.READY_FOR_DEVELOPMENT}>Готов к разработке</SelectItem>
+                        <SelectItem value={OrderStatus.IN_PROGRESS}>В процессе</SelectItem>
+                        <SelectItem value={OrderStatus.COMPLETED}>Завершен</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
