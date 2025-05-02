@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -9,9 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { useOrders, OrderStatus } from '@/context/OrderContext';
+import { useOrders, OrderStatus, EquipmentPart } from '@/context/OrderContext';
 import Header from '@/components/layout/Header';
-import { PartsCatalog, EquipmentPart } from '@/components/commercial/PartsCatalog';
+import { PartsCatalog } from '@/components/commercial/PartsCatalog';
 
 interface ProposalForm {
   orderId: string;

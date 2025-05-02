@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, Plus, Check, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -7,19 +6,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 
-// Define equipment part interface to match OrderContext
-export interface EquipmentPart {
-  id: string;
-  name: string;
-  articleNumber: string;
-  price: number;
-  quantity: number;
-  availableQuantity: number;
-  location?: string;
-  deliveryTime?: string;
-  weight?: number;
-  purchasePrice?: number;
-  deliveryCost?: number;
+// Import EquipmentPart from OrderContext to ensure type consistency
+import { EquipmentPart as OrderEquipmentPart } from '@/context/OrderContext';
+
+// Define equipment part interface to match OrderContext exactly
+export interface EquipmentPart extends OrderEquipmentPart {
+  // No need to redefine properties as we're extending the original type
 }
 
 interface PartsCatalogProps {
