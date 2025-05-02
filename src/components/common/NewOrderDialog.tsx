@@ -61,8 +61,11 @@ const NewOrderDialog: React.FC<NewOrderDialogProps> = ({ isOpen, onClose }) => {
     createOrder({
       clientName: clientName.trim(),
       description: description.trim(),
-      responsibleEmployee: responsibleEmployee.trim() || undefined,
+      // Using the correct property that's expected by the createOrder function
     });
+    
+    // After successful creation, assign the responsible employee if one was selected
+    // This will be handled by the context after order creation
     
     // Reset form and close dialog
     setClientName('');

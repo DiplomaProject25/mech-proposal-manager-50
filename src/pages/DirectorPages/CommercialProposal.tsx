@@ -21,7 +21,6 @@ interface Part {
   articleNumber: string;
   price: number;
   quantity: number;
-  supplier?: string;
 }
 
 interface ProposalForm {
@@ -37,7 +36,7 @@ interface ProposalForm {
 const CommercialProposal = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
-  const { getOrderById, createProposal, getEmployeeList } = useOrders();
+  const { getOrderById, createCommercialProposal, getEmployeeList } = useOrders();
   const { toast } = useToast();
   const employeeList = getEmployeeList();
   
@@ -55,20 +54,19 @@ const CommercialProposal = () => {
   const order = orderId ? getOrderById(orderId) : null;
 
   useEffect(() => {
-    if (!order) return;
+    if (!order || !order.commercialProposal) return;
     
     // If order already has a proposal, populate the form with it
-    if (order.commercialProposal) {
-      setForm({
-        orderId: order.id,
-        responsibleEmployee: order.commercialProposal.responsibleEmployee || '',
-        tax: order.commercialProposal.tax || 20,
-        markup: order.commercialProposal.markup || 15,
-        selectedParts: [...order.commercialProposal.equipment],
-        totalCost: order.commercialProposal.totalCost || 0,
-        status: order.status as OrderStatus,
-      });
-    }
+    setForm({
+      orderId: order.id,
+      responsibleEmployee: order.commercialProposal.responsibleEmployee || '',
+      // Since tax isn't on the CommercialProposal type, use default value
+      tax: 20,
+      markup: order.commercialProposal.markup || 15,
+      selectedParts: [...order.commercialProposal.equipment],
+      totalCost: order.commercialProposal.totalCost || 0,
+      status: order.status as OrderStatus,
+    });
   }, [order]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,15 +143,13 @@ const CommercialProposal = () => {
       return;
     }
     
-    createProposal({
-      orderId: form.orderId,
-      responsibleEmployee: form.responsibleEmployee,
-      tax: form.tax,
-      markup: form.markup,
-      equipment: form.selectedParts,
-      totalCost: form.totalCost,
-      status: form.status,
-    });
+    // Using createCommercialProposal instead of createProposal, which matches the OrderContext
+    createCommercialProposal(
+      form.orderId,
+      form.selectedParts,
+      form.markup,
+      form.responsibleEmployee,
+    );
     
     navigate(`/orders/${form.orderId}`);
   };

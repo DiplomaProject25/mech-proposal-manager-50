@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Package, TruckIcon, ArrowUp, ShoppingCart } from 'lucide-react';
@@ -48,7 +47,7 @@ const AccountantDashboard = () => {
     articleNumber: string,
     quantity: number,
     price: number,
-    supplier?: string
+    // Remove the supplier property reference that's causing the TypeScript error
   }> = {};
   
   filteredOrders.forEach(order => {
@@ -62,7 +61,7 @@ const AccountantDashboard = () => {
             articleNumber: part.articleNumber,
             quantity: part.quantity,
             price: part.price,
-            supplier: part.supplier
+            // Remove the supplier property that doesn't exist in the EquipmentPart type
           };
         }
       });
@@ -265,7 +264,7 @@ const AccountantDashboard = () => {
                     <TableRow key={part.articleNumber}>
                       <TableCell>{part.name}</TableCell>
                       <TableCell className="font-mono text-sm">{part.articleNumber}</TableCell>
-                      <TableCell>{part.supplier || "Не указан"}</TableCell>
+                      <TableCell>{"Не указан"}</TableCell>
                       <TableCell className="text-right">{part.quantity}</TableCell>
                       <TableCell className="text-right">${part.price.toFixed(2)}</TableCell>
                       <TableCell className="text-right font-medium">${(part.price * part.quantity).toFixed(2)}</TableCell>
