@@ -16,12 +16,13 @@ import { useOrders, OrderStatus } from '@/context/OrderContext';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/layout/Header';
 
+// Define extended OrderStatus for purchasing flow
 const purchaseStatuses = [
-  OrderStatus.NEED_PURCHASING,
-  OrderStatus.PURCHASING_IN_PROGRESS,
-  OrderStatus.IN_TRANSIT,
-  OrderStatus.UNLOADING,
-  OrderStatus.READY_FOR_DEVELOPMENT
+  "NEED_PURCHASING",
+  "PURCHASING_IN_PROGRESS",
+  "IN_TRANSIT",
+  "UNLOADING",
+  "READY_FOR_DEVELOPMENT"
 ];
 
 const AccountantDashboard = () => {
@@ -31,7 +32,7 @@ const AccountantDashboard = () => {
   
   // Filter orders that require purchasing
   const purchaseOrders = orders.filter(order => 
-    purchaseStatuses.includes(order.status as OrderStatus)
+    purchaseStatuses.includes(order.status as string)
   );
   
   const filteredOrders = selectedStatusFilter === "all" 
@@ -58,7 +59,7 @@ const AccountantDashboard = () => {
   const totalItems = Object.values(partsNeeded).reduce((acc, item) => acc + item.quantity, 0);
   const totalCost = Object.values(partsNeeded).reduce((acc, item) => acc + (item.price * item.quantity), 0);
   
-  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
+  const handleStatusChange = (orderId: string, newStatus: string) => {
     updateOrderStatus(orderId, newStatus);
     toast({
       title: "Статус обновлен",
@@ -212,7 +213,7 @@ const AccountantDashboard = () => {
                           <TableCell>
                             <Select
                               value={order.status}
-                              onValueChange={(value) => handleStatusChange(order.id, value as OrderStatus)}
+                              onValueChange={(value) => handleStatusChange(order.id, value)}
                             >
                               <SelectTrigger className="w-[200px]">
                                 <SelectValue placeholder="Изменить статус" />

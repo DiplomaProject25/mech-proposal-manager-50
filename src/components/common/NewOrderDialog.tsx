@@ -61,7 +61,7 @@ const NewOrderDialog: React.FC<NewOrderDialogProps> = ({ isOpen, onClose }) => {
     createOrder({
       clientName: clientName.trim(),
       description: description.trim(),
-      responsibleEmployee: responsibleEmployee.trim() || undefined,
+      assignedTo: responsibleEmployee.trim() || undefined,
     });
     
     // Reset form and close dialog
@@ -132,7 +132,7 @@ const NewOrderDialog: React.FC<NewOrderDialogProps> = ({ isOpen, onClose }) => {
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Не назначен</SelectItem>
+                <SelectItem value="unassigned">Не назначен</SelectItem>
                 {employeeList.map((employee) => (
                   <SelectItem key={employee} value={employee}>
                     {employee}

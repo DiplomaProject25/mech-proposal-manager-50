@@ -29,7 +29,7 @@ interface CommercialProposalForm {
   markup: number;
   selectedParts: Part[];
   totalCost: number;
-  status: OrderStatus;
+  status: string;
 }
 
 const CommercialProposal = () => {
@@ -44,7 +44,7 @@ const CommercialProposal = () => {
     markup: 15,
     selectedParts: [],
     totalCost: 0,
-    status: OrderStatus.PROPOSAL_CREATED,
+    status: "PROPOSAL_CREATED",
   });
   const [showPartsCatalog, setShowPartsCatalog] = useState(false);
 
@@ -71,7 +71,7 @@ const CommercialProposal = () => {
     setForm(prevForm => ({ ...prevForm, [name]: parseFloat(value) || 0 }));
   };
 
-  const handleStatusChange = (status: OrderStatus) => {
+  const handleStatusChange = (status: string) => {
     setForm(prevForm => ({ ...prevForm, status }));
   };
 
@@ -259,14 +259,17 @@ const CommercialProposal = () => {
 
                 <div>
                   <Label htmlFor="status">Статус заказа</Label>
-                  <Select onValueChange={(value) => handleStatusChange(value as OrderStatus)} defaultValue={form.status}>
+                  <Select onValueChange={(value) => handleStatusChange(value)} defaultValue={form.status}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Выберите статус" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.values(OrderStatus).map((status) => (
-                        <SelectItem key={status} value={status}>{status}</SelectItem>
-                      ))}
+                      <SelectItem value="NEED_PURCHASING">NEED_PURCHASING</SelectItem>
+                      <SelectItem value="PROPOSAL_CREATED">PROPOSAL_CREATED</SelectItem>
+                      <SelectItem value="PENDING_APPROVAL">PENDING_APPROVAL</SelectItem>
+                      <SelectItem value="APPROVED">APPROVED</SelectItem>
+                      <SelectItem value="IN_PROGRESS">IN_PROGRESS</SelectItem>
+                      <SelectItem value="COMPLETED">COMPLETED</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
