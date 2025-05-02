@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronLeft, FileText, User, Calendar, Calculator, ShoppingCart, Download } from 'lucide-react';
@@ -8,11 +9,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useOrders, OrderStatus } from '@/context/OrderContext';
 import Header from '@/components/layout/Header';
 import StatusBadge from '@/components/common/StatusBadge';
+import { handleDownloadProposalAsWord } from '@/utils/documentUtils';
 
 const OrderDetails = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
-  const { getOrderById, updateOrderStatus, toggleProposalPrices } = useOrders();
+  const { getOrderById, updateOrderStatus, toggleProposalPrices, downloadProposalAsWord } = useOrders();
   const { toast } = useToast();
   
   const order = orderId ? getOrderById(orderId) : null;
@@ -54,6 +56,12 @@ const OrderDetails = () => {
         title: 'Цены рассчитаны',
         description: 'Теперь цены отображаются в коммерческом предложении',
       });
+    }
+  };
+
+  const handleDownloadWord = () => {
+    if (order?.commercialProposal?.id) {
+      downloadProposalAsWord(order.commercialProposal.id);
     }
   };
   
@@ -188,7 +196,7 @@ const OrderDetails = () => {
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-medium">Коммерческое предложение</h3>
                   {order?.commercialProposal && (
-                    <Button variant="outline" className="flex items-center">
+                    <Button variant="outline" className="flex items-center" onClick={handleDownloadWord}>
                       <Download className="mr-1 h-4 w-4" />
                       Скачать в Word
                     </Button>
@@ -209,6 +217,9 @@ const OrderDetails = () => {
                             </th>
                             <th className="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Кол-во
+                            </th>
+                            <th className="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Срок доставки
                             </th>
                             {order.commercialProposal.showPrices && (
                               <>
@@ -234,6 +245,9 @@ const OrderDetails = () => {
                               <td className="py-3 px-4 text-center">
                                 {item.quantity}
                               </td>
+                              <td className="py-3 px-4 text-center">
+                                {item.deliveryTime || "7-10 дней"}
+                              </td>
                               {order.commercialProposal.showPrices && (
                                 <>
                                   <td className="py-3 px-4 text-right">
@@ -250,7 +264,7 @@ const OrderDetails = () => {
                         {order.commercialProposal.showPrices && (
                           <tfoot>
                             <tr>
-                              <td colSpan={3} className="py-3 px-4 text-right font-medium">
+                              <td colSpan={4} className="py-3 px-4 text-right font-medium">
                                 Подытог:
                               </td>
                               <td colSpan={2} className="py-3 px-4 text-right font-medium">
@@ -258,7 +272,7 @@ const OrderDetails = () => {
                               </td>
                             </tr>
                             <tr>
-                              <td colSpan={3} className="py-3 px-4 text-right font-medium">
+                              <td colSpan={4} className="py-3 px-4 text-right font-medium">
                                 Наценка ({order.commercialProposal.markup}%):
                               </td>
                               <td colSpan={2} className="py-3 px-4 text-right font-medium">
@@ -267,7 +281,7 @@ const OrderDetails = () => {
                             </tr>
                             {order.commercialProposal.companyMarkup && (
                               <tr>
-                                <td colSpan={3} className="py-3 px-4 text-right font-medium">
+                                <td colSpan={4} className="py-3 px-4 text-right font-medium">
                                   Наценка для предприятия ({order.commercialProposal.companyMarkup}%):
                                 </td>
                                 <td colSpan={2} className="py-3 px-4 text-right font-medium">
@@ -275,8 +289,18 @@ const OrderDetails = () => {
                                 </td>
                               </tr>
                             )}
+                            <tr>
+                              <td colSpan={4} className="py-3 px-4 text-right font-medium">
+                                НДС (20%):
+                              </td>
+                              <td colSpan={2} className="py-3 px-4 text-right font-medium">
+                                ${((order.commercialProposal.equipment.reduce((total, item) => total + item.price * item.quantity, 0) * 
+                                (1 + order.commercialProposal.markup / 100 + 
+                                (order.commercialProposal.companyMarkup || 0) / 100)) * 0.2).toFixed(2)}
+                              </td>
+                            </tr>
                             <tr className="bg-gray-50 font-bold">
-                              <td colSpan={3} className="py-3 px-4 text-right">
+                              <td colSpan={4} className="py-3 px-4 text-right">
                                 Итого:
                               </td>
                               <td colSpan={2} className="py-3 px-4 text-right">

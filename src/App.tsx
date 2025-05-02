@@ -1,176 +1,84 @@
 
-import React, { useEffect, Suspense } from 'react';
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AuthProvider, useAuth, UserRole } from './context/AuthContext';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { OrderProvider } from './context/OrderContext';
-import { AnimatePresence } from 'framer-motion';
+import './App.css';
 
-// Import components
-import Sidebar from './components/layout/Sidebar';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Orders from './pages/Orders';
-import NotFound from './pages/NotFound';
-import CommercialProposal from './pages/DirectorPages/CommercialProposal';
 import OrderDetails from './pages/DirectorPages/OrderDetails';
+import CommercialProposal from './pages/DirectorPages/CommercialProposal';
 import Proposals from './pages/DirectorPages/Proposals';
+import ProductManagement from './pages/DirectorPages/ProductManagement';
 import ConstructorDashboard from './pages/ConstructorPages/ConstructorDashboard';
-import EquipmentDetails from './pages/ConstructorPages/EquipmentDetails';
 import Equipment from './pages/ConstructorPages/Equipment';
+import EquipmentDetails from './pages/ConstructorPages/EquipmentDetails';
 import Workshop from './pages/ConstructorPages/Workshop';
+import AccountantDashboard from './pages/AccountantPages/AccountantDashboard';
+import LogisticianDashboard from './pages/LogisticianPages/LogisticianDashboard';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
-import AccountantDashboard from './pages/AccountantPages/AccountantDashboard';
+import NotFound from './pages/NotFound';
+import Index from './pages/Index';
 
-const queryClient = new QueryClient();
-
-// Route Guard component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Protected Route component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, loading } = useAuth();
-  const location = useLocation();
-
+  
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse">Загрузка...</div>
-      </div>
-    );
+    return <div>Loading...</div>;
   }
-
+  
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" />;
   }
-
+  
   return <>{children}</>;
 };
 
-// Layout component with sidebar
-const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-
-  if (!isAuthenticated) {
-    return <>{children}</>;
-  }
-
+function App() {
   return (
-    <div className="flex">
-      <Sidebar />
-      <div className="flex-1 ml-[250px]">
-        {children}
-      </div>
-    </div>
-  );
-};
-
-// Main app component
-const AppContent = () => {
-  const location = useLocation();
-  const { user } = useAuth();
-
-  return (
-    <AnimatePresence mode="wait">
-      <AppLayout>
-        <Suspense fallback={<div>Загрузка...</div>}>
-          <Routes location={location} key={location.pathname}>
-            <Route path="/login" element={<Login />} />
-            
-            {/* Protected Routes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/orders" element={
-              <ProtectedRoute>
-                <Orders />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/orders/:orderId" element={
-              <ProtectedRoute>
-                <OrderDetails />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/proposals" element={
-              <ProtectedRoute>
-                <Proposals />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/proposals/create/:orderId" element={
-              <ProtectedRoute>
-                <CommercialProposal />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/equipment/order/:orderId" element={
-              <ProtectedRoute>
-                <EquipmentDetails />
-              </ProtectedRoute>
-            } />
-            
-            {/* Routes for Equipment, Workshop, Profile, and Settings */}
-            <Route path="/equipment" element={
-              <ProtectedRoute>
-                <Equipment />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/workshop" element={
-              <ProtectedRoute>
-                <Workshop />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            } />
-
-            {/* Accountant Routes */}
-            <Route path="/accountant" element={
-              <ProtectedRoute>
-                <AccountantDashboard />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </AppLayout>
-    </AnimatePresence>
-  );
-};
-
-// Main App with providers
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+    <BrowserRouter>
       <AuthProvider>
         <OrderProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            
+            {/* Protected routes */}
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+            <Route path="/orders/:orderId" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
+            <Route path="/proposals/create/:orderId" element={<ProtectedRoute><CommercialProposal /></ProtectedRoute>} />
+            <Route path="/proposals" element={<ProtectedRoute><Proposals /></ProtectedRoute>} />
+            <Route path="/product-management" element={<ProtectedRoute><ProductManagement /></ProtectedRoute>} />
+            
+            {/* Constructor routes */}
+            <Route path="/constructor" element={<ProtectedRoute><ConstructorDashboard /></ProtectedRoute>} />
+            <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
+            <Route path="/equipment/:equipmentId" element={<ProtectedRoute><EquipmentDetails /></ProtectedRoute>} />
+            <Route path="/workshop" element={<ProtectedRoute><Workshop /></ProtectedRoute>} />
+            
+            {/* Accountant routes */}
+            <Route path="/accountant" element={<ProtectedRoute><AccountantDashboard /></ProtectedRoute>} />
+            
+            {/* Logistician routes */}
+            <Route path="/logistics" element={<ProtectedRoute><LogisticianDashboard /></ProtectedRoute>} />
+            
+            {/* User routes */}
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            
+            {/* 404 route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </OrderProvider>
       </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </BrowserRouter>
+  );
+}
 
 export default App;

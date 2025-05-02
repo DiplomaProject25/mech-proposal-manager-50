@@ -6,7 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 export enum UserRole {
   DIRECTOR = 'director',
   CONSTRUCTOR = 'constructor',
-  ACCOUNTANT = 'accountant'
+  ACCOUNTANT = 'accountant',
+  LOGISTICIAN = 'logistician'
 }
 
 // Define the user interface
@@ -27,6 +28,7 @@ interface AuthContextType {
   isDirector: boolean;
   isConstructor: boolean;
   isAccountant: boolean;
+  isLogistician: boolean;
 }
 
 // Create the auth context
@@ -54,6 +56,13 @@ const MOCK_USERS = [
     email: 'accountant@example.com',
     password: 'password123',
     role: UserRole.ACCOUNTANT
+  },
+  {
+    id: '4',
+    name: 'Logistician User',
+    email: 'logistician@example.com',
+    password: 'password123',
+    role: UserRole.LOGISTICIAN
   }
 ];
 
@@ -132,6 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isDirector = user?.role === UserRole.DIRECTOR;
   const isConstructor = user?.role === UserRole.CONSTRUCTOR;
   const isAccountant = user?.role === UserRole.ACCOUNTANT;
+  const isLogistician = user?.role === UserRole.LOGISTICIAN;
 
   return (
     <AuthContext.Provider
@@ -144,6 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isDirector,
         isConstructor,
         isAccountant,
+        isLogistician,
       }}
     >
       {children}

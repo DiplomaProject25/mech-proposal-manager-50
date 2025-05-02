@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { useOrders, OrderStatus, EquipmentPart } from '@/context/OrderContext';
@@ -17,11 +16,9 @@ import { PartsCatalog } from '@/components/commercial/PartsCatalog';
 interface ProposalForm {
   orderId: string;
   tax: number;
-  companyMarkup: number;
   markup: number;
   selectedParts: EquipmentPart[];
   totalCost: number;
-  status: OrderStatus;
 }
 
 const CommercialProposal = () => {
@@ -34,10 +31,8 @@ const CommercialProposal = () => {
     orderId: orderId || '',
     tax: 20,
     markup: 15,
-    companyMarkup: 10,
     selectedParts: [],
     totalCost: 0,
-    status: OrderStatus.PROPOSAL_CREATED,
   });
   const [showPartsCatalog, setShowPartsCatalog] = useState(false);
 
@@ -49,13 +44,10 @@ const CommercialProposal = () => {
     // If order already has a proposal, populate the form with it
     setForm({
       orderId: order.id,
-      // Since tax isn't on the CommercialProposal type, use default value
       tax: 20,
       markup: order.commercialProposal.markup || 15,
-      companyMarkup: order.commercialProposal.companyMarkup || 10,
       selectedParts: [...order.commercialProposal.equipment],
       totalCost: order.commercialProposal.totalCost || 0,
-      status: order.status as OrderStatus,
     });
   }, [order]);
 
@@ -67,10 +59,6 @@ const CommercialProposal = () => {
   const handleNumberInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm(prevForm => ({ ...prevForm, [name]: parseFloat(value) || 0 }));
-  };
-
-  const handleStatusChange = (status: OrderStatus) => {
-    setForm(prevForm => ({ ...prevForm, status }));
   };
 
   const handlePartSelect = (parts: EquipmentPart[]) => {
@@ -113,15 +101,14 @@ const CommercialProposal = () => {
       0
     );
     
-    // Apply markups
+    // Apply markup
     const markupAmount = subtotal * (form.markup / 100);
-    const companyMarkupAmount = subtotal * (form.companyMarkup / 100);
     
     // Calculate tax
-    const taxAmount = (subtotal + markupAmount + companyMarkupAmount) * (form.tax / 100);
+    const taxAmount = (subtotal + markupAmount) * (form.tax / 100);
     
     // Final total
-    const total = subtotal + markupAmount + companyMarkupAmount + taxAmount;
+    const total = subtotal + markupAmount + taxAmount;
     
     setForm(prevForm => ({
       ...prevForm,
@@ -146,13 +133,13 @@ const CommercialProposal = () => {
       return;
     }
     
-    // Using createCommercialProposal with the correct number of arguments
+    // Default value for company markup is 10%
     createCommercialProposal(
       form.orderId,
       form.selectedParts,
       form.markup,
-      '', // Empty string for responsibleEmployee as per requirements
-      form.companyMarkup // Adding company markup
+      '',
+      10
     );
     
     navigate(`/orders/${form.orderId}`);
@@ -208,19 +195,7 @@ const CommercialProposal = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-                  <div>
-                    <Label htmlFor="clientName">Клиент</Label>
-                    <Input 
-                      id="clientName" 
-                      value={order?.clientName || ''} 
-                      disabled 
-                      className="bg-gray-50"
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="tax">НДС (%)</Label>
                     <Input
@@ -246,42 +221,11 @@ const CommercialProposal = () => {
                       onChange={handleNumberInputChange}
                     />
                   </div>
-
-                  <div>
-                    <Label htmlFor="companyMarkup">Наценка для предприятия (%)</Label>
-                    <Input
-                      id="companyMarkup"
-                      name="companyMarkup"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={form.companyMarkup}
-                      onChange={handleNumberInputChange}
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-                  <div>
-                    <Label htmlFor="status">Статус заказа</Label>
-                    <Select onValueChange={(value) => handleStatusChange(value as OrderStatus)} defaultValue={form.status}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Выберите статус" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={OrderStatus.NEED_PURCHASING}>Необходима закупка</SelectItem>
-                        <SelectItem value={OrderStatus.PROPOSAL_CREATED}>Предложение создано</SelectItem>
-                        <SelectItem value={OrderStatus.READY_FOR_DEVELOPMENT}>Готов к разработке</SelectItem>
-                        <SelectItem value={OrderStatus.IN_PROGRESS}>В процессе</SelectItem>
-                        <SelectItem value={OrderStatus.COMPLETED}>Завершен</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
                 
                 <div>
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-medium">Выбранное оборудование</h3>
+                    <h3 className="text-lg font-medium">Заказ</h3>
                     <Button
                       type="button"
                       onClick={() => setShowPartsCatalog(true)}
@@ -378,12 +322,8 @@ const CommercialProposal = () => {
                       <span className="font-medium">${(form.selectedParts.reduce((total, item) => total + (item.price * item.quantity), 0) * (form.markup / 100)).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-500 mr-8">Наценка для предприятия ({form.companyMarkup}%):</span>
-                      <span className="font-medium">${(form.selectedParts.reduce((total, item) => total + (item.price * item.quantity), 0) * (form.companyMarkup / 100)).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
                       <span className="text-sm text-gray-500 mr-8">НДС ({form.tax}%):</span>
-                      <span className="font-medium">${((form.selectedParts.reduce((total, item) => total + (item.price * item.quantity), 0) * (1 + form.markup / 100 + form.companyMarkup / 100)) * (form.tax / 100)).toFixed(2)}</span>
+                      <span className="font-medium">${((form.selectedParts.reduce((total, item) => total + (item.price * item.quantity), 0) * (1 + form.markup / 100)) * (form.tax / 100)).toFixed(2)}</span>
                     </div>
                     <div className="pt-2 border-t border-gray-200">
                       <div className="flex justify-between">
