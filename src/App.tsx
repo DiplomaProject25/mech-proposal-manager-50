@@ -38,11 +38,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
-        <div className="flex-1 ml-16 md:ml-64 transition-all duration-300">
-          {children}
+        <div className="flex-1 transition-all duration-300 overflow-x-hidden">
+          <div className="p-4 md:p-6">
+            {children}
+          </div>
         </div>
       </div>
     </SidebarProvider>

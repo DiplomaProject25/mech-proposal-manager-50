@@ -12,8 +12,9 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarProvider,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { Home, ClipboardList, Package, Settings, User, LogOut } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, Package, Settings, User, LogOut } from 'lucide-react';
 import { useAuth, UserRole } from '@/context/AuthContext';
 
 const AppSidebar = () => {
@@ -25,7 +26,7 @@ const AppSidebar = () => {
   const menuItems = [
     {
       title: 'Панель управления',
-      icon: <Home className="h-5 w-5" />,
+      icon: <LayoutDashboard className="h-5 w-5" />,
       href: '/dashboard',
       forRoles: [UserRole.DIRECTOR, UserRole.CONSTRUCTOR, UserRole.ACCOUNTANT],
     },
@@ -48,14 +49,14 @@ const AppSidebar = () => {
   return (
     <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center p-2">
-          <span className="text-lg font-semibold">Отава</span>
+        <div className="flex items-center justify-between p-3">
+          <span className="text-xl font-semibold">Отава</span>
+          <SidebarTrigger className="md:hidden" />
         </div>
       </SidebarHeader>
       
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Главное меню</SidebarGroupLabel>
           <SidebarMenu>
             {menuItems.map((item) => {
               if (!item.forRoles.includes(user.role)) return null;
@@ -67,9 +68,9 @@ const AppSidebar = () => {
                     isActive={isActive(item.href)}
                     tooltip={item.title}
                   >
-                    <Link to={item.href}>
-                      <span className="text-blue-600">{item.icon}</span>
-                      <span>{item.title}</span>
+                    <Link to={item.href} className="flex items-center">
+                      <span className={`${isActive(item.href) ? "text-blue-500" : "text-gray-500"}`}>{item.icon}</span>
+                      <span className={`${isActive(item.href) ? "font-medium" : ""}`}>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -79,7 +80,7 @@ const AppSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter>
+      <SidebarFooter className="mt-auto">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -87,8 +88,8 @@ const AppSidebar = () => {
               isActive={isActive('/profile')}
               tooltip="Профиль"
             >
-              <Link to="/profile">
-                <User className="h-5 w-5 text-blue-600" />
+              <Link to="/profile" className="flex items-center">
+                <User className={`h-5 w-5 ${isActive('/profile') ? "text-blue-500" : "text-gray-500"}`} />
                 <span>Профиль</span>
               </Link>
             </SidebarMenuButton>
@@ -100,8 +101,8 @@ const AppSidebar = () => {
               isActive={isActive('/settings')}
               tooltip="Настройки"
             >
-              <Link to="/settings">
-                <Settings className="h-5 w-5 text-blue-600" />
+              <Link to="/settings" className="flex items-center">
+                <Settings className={`h-5 w-5 ${isActive('/settings') ? "text-blue-500" : "text-gray-500"}`} />
                 <span>Настройки</span>
               </Link>
             </SidebarMenuButton>
@@ -112,8 +113,8 @@ const AppSidebar = () => {
               asChild
               tooltip="Выйти"
             >
-              <button onClick={logout}>
-                <LogOut className="h-5 w-5 text-blue-600" />
+              <button onClick={logout} className="flex w-full items-center">
+                <LogOut className="h-5 w-5 text-gray-500" />
                 <span>Выйти</span>
               </button>
             </SidebarMenuButton>
