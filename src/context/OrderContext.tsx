@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -12,6 +11,7 @@ export enum OrderStatus {
   NEED_PURCHASING = 'NEED_PURCHASING',
   PURCHASING = 'PURCHASING',
   IN_TRANSIT = 'IN_TRANSIT',
+  IN_DELIVERY = 'IN_DELIVERY',  // Added this to fix the errors
   UNLOADING = 'UNLOADING',
   ASSEMBLY = 'ASSEMBLY',
   COMPLETED = 'COMPLETED',
@@ -29,6 +29,7 @@ export interface EquipmentPart {
   location: string;
   deliveryTime?: string;
   description?: string;
+  weight?: number; // Added this optional property
 }
 
 // Define the commercial proposal interface
@@ -57,6 +58,12 @@ export interface Order {
   updatedAt: Date;
 }
 
+// Item needed for purchase interface
+export interface PurchaseItem {
+  part: EquipmentPart;
+  neededQuantity: number;
+}
+
 // Define the context type
 interface OrderContextType {
   orders: Order[];
@@ -64,6 +71,8 @@ interface OrderContextType {
   getOrderById: (id: string) => Order | undefined;
   updateOrderStatus: (id: string, status: OrderStatus) => void;
   getAllEquipment: () => EquipmentPart[];
+  getEquipmentByArticle?: (articleNumber: string) => EquipmentPart | undefined;
+  updateEquipmentInventory?: (articleNumber: string, quantity: number) => void;
   createCommercialProposal: (
     orderId: string,
     equipment: EquipmentPart[],
@@ -73,6 +82,14 @@ interface OrderContextType {
   ) => void;
   toggleProposalPrices: (orderId: string, showPrices: boolean) => void;
   downloadProposalAsWord: (proposalId: string) => void;
+  // Add the missing methods
+  createOrder: (orderData: { clientName: string, description: string, responsibleEmployee?: string }) => void;
+  loading: boolean;
+  getEmployeeList: () => string[];
+  getOrdersByStatus: (statuses: OrderStatus[]) => Order[];
+  getNeededPurchaseItems: () => PurchaseItem[];
+  filteredOrders?: Order[];
+  addNewEquipment?: (newEquipment: EquipmentPart) => void;
 }
 
 // Create the context
@@ -276,11 +293,15 @@ const MOCK_ORDERS: Order[] = [
   }
 ];
 
+// Mock employee list
+const MOCK_EMPLOYEES = ['Иванов И.И.', 'Петров П.П.', 'Сидоров С.С.', 'Козлов К.К.', 'Смирнов С.С.'];
+
 // OrderProvider component
 export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   // Add a new order
   const addOrder = (clientName: string, description: string): Order => {
@@ -295,6 +316,37 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     
     setOrders(prevOrders => [...prevOrders, newOrder]);
     return newOrder;
+  };
+
+  // Create order with loading state
+  const createOrder = (orderData: { clientName: string, description: string, responsibleEmployee?: string }) => {
+    setLoading(true);
+    try {
+      const newOrder: Order = {
+        id: (orders.length + 1).toString(),
+        clientName: orderData.clientName,
+        description: orderData.description,
+        responsibleEmployee: orderData.responsibleEmployee,
+        status: OrderStatus.NEW,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      setOrders(prevOrders => [...prevOrders, newOrder]);
+      
+      toast({
+        title: 'Заказ создан',
+        description: `Заказ №${newOrder.id} успешно создан`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось создать заказ',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Get order by ID
@@ -321,6 +373,69 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // Get all equipment
   const getAllEquipment = (): EquipmentPart[] => {
     return MOCK_EQUIPMENT;
+  };
+
+  // Get equipment by article number
+  const getEquipmentByArticle = (articleNumber: string): EquipmentPart | undefined => {
+    return MOCK_EQUIPMENT.find(item => item.articleNumber === articleNumber);
+  };
+
+  // Update equipment inventory
+  const updateEquipmentInventory = (articleNumber: string, quantity: number): void => {
+    // In a real app, this would update the database
+    console.log(`Updated ${articleNumber} quantity to ${quantity}`);
+  };
+
+  // Get employee list
+  const getEmployeeList = (): string[] => {
+    return MOCK_EMPLOYEES;
+  };
+
+  // Get orders by status
+  const getOrdersByStatus = (statuses: OrderStatus[]): Order[] => {
+    return orders.filter(order => statuses.includes(order.status));
+  };
+
+  // Get needed purchase items
+  const getNeededPurchaseItems = (): PurchaseItem[] => {
+    const items: PurchaseItem[] = [];
+    
+    // Find all equipment in orders with NEED_PURCHASING status
+    const purchasingOrders = getOrdersByStatus([OrderStatus.NEED_PURCHASING, OrderStatus.PURCHASING]);
+    
+    // Collect all parts that need to be purchased
+    purchasingOrders.forEach(order => {
+      if (order.commercialProposal) {
+        order.commercialProposal.equipment.forEach(part => {
+          // Check if we need to purchase more
+          if (part.quantity > part.availableQuantity) {
+            const neededQuantity = part.quantity - part.availableQuantity;
+            
+            // Check if we already have this part in our items list
+            const existingItem = items.find(item => item.part.articleNumber === part.articleNumber);
+            
+            if (existingItem) {
+              // Update the needed quantity
+              existingItem.neededQuantity += neededQuantity;
+            } else {
+              // Add a new item
+              items.push({
+                part,
+                neededQuantity
+              });
+            }
+          }
+        });
+      }
+    });
+    
+    return items;
+  };
+
+  // Add new equipment
+  const addNewEquipment = (newEquipment: EquipmentPart): void => {
+    // In a real app, this would add to the database
+    console.log('New equipment added:', newEquipment);
   };
 
   // Create a commercial proposal
@@ -542,9 +657,17 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         getOrderById,
         updateOrderStatus,
         getAllEquipment,
+        getEquipmentByArticle,
+        updateEquipmentInventory,
         createCommercialProposal,
         toggleProposalPrices,
-        downloadProposalAsWord
+        downloadProposalAsWord,
+        createOrder,
+        loading,
+        getEmployeeList,
+        getOrdersByStatus,
+        getNeededPurchaseItems,
+        addNewEquipment
       }}
     >
       {children}

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Truck, ShoppingCart, CheckCircle } from 'lucide-react';
@@ -38,7 +37,7 @@ const LogisticianDashboard = () => {
     });
   };
   
-  const nextStatusMap: Record<OrderStatus, OrderStatus> = {
+  const nextStatusMap: Record<string, OrderStatus> = {
     [OrderStatus.NEED_PURCHASING]: OrderStatus.PURCHASING,
     [OrderStatus.PURCHASING]: OrderStatus.IN_DELIVERY,
     [OrderStatus.IN_DELIVERY]: OrderStatus.UNLOADING,
@@ -50,7 +49,9 @@ const LogisticianDashboard = () => {
     [OrderStatus.REJECTED]: OrderStatus.REJECTED,
     [OrderStatus.IN_PROGRESS]: OrderStatus.IN_PROGRESS,
     [OrderStatus.ASSEMBLY]: OrderStatus.ASSEMBLY,
-    [OrderStatus.COMPLETED]: OrderStatus.COMPLETED
+    [OrderStatus.COMPLETED]: OrderStatus.COMPLETED,
+    [OrderStatus.PENDING]: OrderStatus.PENDING,
+    [OrderStatus.IN_TRANSIT]: OrderStatus.IN_TRANSIT
   };
   
   const getNextButtonText = (status: OrderStatus) => {

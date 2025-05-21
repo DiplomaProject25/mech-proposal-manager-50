@@ -59,6 +59,14 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className, hideIcon =
       color: 'bg-pink-100 text-pink-800 border-pink-300',
       label: 'Разгрузка',
     },
+    [OrderStatus.PENDING]: {
+      color: 'bg-gray-100 text-gray-800 border-gray-300',
+      label: 'В ожидании',
+    },
+    [OrderStatus.IN_TRANSIT]: {
+      color: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+      label: 'В транзите',
+    },
     
     // String-based statuses - using unique string keys
     'string_новый': {

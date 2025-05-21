@@ -79,6 +79,7 @@ const Orders = () => {
                           'NEED_PURCHASING': 'Необходима закупка',
                           'PURCHASING': 'Происходит закупка',
                           'IN_TRANSIT': 'В пути',
+                          'IN_DELIVERY': 'В пути',
                           'UNLOADING': 'Разгрузка',
                           'ASSEMBLY': 'Сборка',
                           'COMPLETED': 'Завершен',
@@ -120,7 +121,7 @@ const Orders = () => {
         </div>
       </main>
       
-      <NewOrderDialog open={showNewOrderDialog} onClose={() => setShowNewOrderDialog(false)} />
+      <NewOrderDialog isOpen={showNewOrderDialog} onClose={() => setShowNewOrderDialog(false)} />
     </div>
   );
 };
