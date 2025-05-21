@@ -3,6 +3,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { OrderProvider } from './context/OrderContext';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import AppSidebar from './components/layout/AppSidebar';
 import './App.css';
 
 import Login from './pages/Login';
@@ -35,7 +37,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" />;
   }
   
-  return <>{children}</>;
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar />
+        <div className="flex-1 ml-16 md:ml-64 transition-all duration-300">
+          {children}
+        </div>
+      </div>
+    </SidebarProvider>
+  );
 };
 
 function App() {
