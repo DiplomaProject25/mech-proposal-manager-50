@@ -3,23 +3,18 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ClipboardList, 
-  FileText, 
   Home, 
-  Wrench, 
-  Package, 
-  Settings as SettingsIcon,
-  LogOut, 
-  Minimize2, 
-  Maximize2,
+  ClipboardList, 
   User,
-  ShoppingCart
+  Settings,
+  LogOut,
+  Maximize2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth, UserRole } from '@/context/AuthContext';
 
 const Sidebar = () => {
-  const { user, logout, isDirector, isConstructor } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -42,30 +37,6 @@ const Sidebar = () => {
       href: '/orders',
       forRoles: [UserRole.DIRECTOR, UserRole.CONSTRUCTOR],
     },
-    {
-      title: 'Коммерческие предложения',
-      icon: <FileText size={20} />,
-      href: '/proposals',
-      forRoles: [UserRole.DIRECTOR],
-    },
-    {
-      title: 'Каталог запчастей',
-      icon: <Package size={20} />,
-      href: '/equipment',
-      forRoles: [UserRole.CONSTRUCTOR],
-    },
-    {
-      title: 'Цех',
-      icon: <Wrench size={20} />,
-      href: '/workshop',
-      forRoles: [UserRole.CONSTRUCTOR],
-    },
-    {
-      title: 'Управление закупками',
-      icon: <ShoppingCart size={20} />,
-      href: '/accountant',
-      forRoles: [UserRole.ACCOUNTANT],
-    },
   ];
 
   const sidebarVariants = {
@@ -79,7 +50,7 @@ const Sidebar = () => {
       initial="expanded"
       animate={collapsed ? 'collapsed' : 'expanded'}
       transition={{ duration: 0.3 }}
-      className="bg-white dark:bg-gray-800 shadow-lg h-screen fixed left-0 top-0 z-10 flex flex-col border-r border-gray-200 dark:border-gray-700"
+      className="bg-white dark:bg-gray-800 shadow-lg h-screen fixed left-0 top-0 z-10 flex flex-col"
     >
       <div className="p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
         <AnimatePresence>
@@ -90,7 +61,7 @@ const Sidebar = () => {
               exit={{ opacity: 0 }}
               className="font-semibold text-lg dark:text-white"
             >
-              MechERP
+              Отава
             </motion.div>
           )}
         </AnimatePresence>
@@ -98,11 +69,11 @@ const Sidebar = () => {
           onClick={toggleCollapse}
           className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
         >
-          {collapsed ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
+          <Maximize2 size={18} />
         </button>
       </div>
 
-      <div className="flex-1 py-4 overflow-y-auto">
+      <div className="flex-1 py-4">
         <nav className="space-y-1 px-2">
           {menuItems.map((item) => {
             if (!item.forRoles.includes(user.role)) return null;
@@ -112,13 +83,13 @@ const Sidebar = () => {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "flex items-center p-2 rounded-lg transition-all duration-200",
+                  "flex items-center p-3 rounded-lg transition-all duration-200",
                   location.pathname === item.href
-                    ? "bg-blue-500 text-white"
-                    : "hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-200"
+                    ? "bg-blue-100 text-blue-700"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200"
                 )}
               >
-                <span className="flex items-center justify-center">
+                <span className="flex items-center justify-center text-blue-600">
                   {item.icon}
                 </span>
                 <AnimatePresence>
@@ -139,17 +110,17 @@ const Sidebar = () => {
         </nav>
       </div>
 
-      <div className="py-2 px-2 border-t border-gray-200 dark:border-gray-700">
+      <div className="mt-auto">
         <Link
           to="/profile"
           className={cn(
-            "flex items-center p-2 rounded-lg transition-all duration-200",
+            "flex items-center p-3 transition-all duration-200",
             location.pathname === '/profile'
-              ? "bg-blue-500 text-white"
-              : "hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-200"
+              ? "bg-blue-100 text-blue-700"
+              : "hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200"
           )}
         >
-          <span className="flex items-center justify-center">
+          <span className="flex items-center justify-center text-blue-600">
             <User size={20} />
           </span>
           <AnimatePresence>
@@ -169,14 +140,14 @@ const Sidebar = () => {
         <Link
           to="/settings"
           className={cn(
-            "flex items-center p-2 rounded-lg transition-all duration-200",
+            "flex items-center p-3 transition-all duration-200",
             location.pathname === '/settings'
-              ? "bg-blue-500 text-white"
-              : "hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-200"
+              ? "bg-blue-100 text-blue-700"
+              : "hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200"
           )}
         >
-          <span className="flex items-center justify-center">
-            <SettingsIcon size={20} />
+          <span className="flex items-center justify-center text-blue-600">
+            <Settings size={20} />
           </span>
           <AnimatePresence>
             {!collapsed && (
@@ -191,14 +162,12 @@ const Sidebar = () => {
             )}
           </AnimatePresence>
         </Link>
-      </div>
 
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={logout}
-          className="flex items-center w-full p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-gray-200 transition-all duration-200"
+          className="flex items-center w-full p-3 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 transition-all duration-200"
         >
-          <span className="flex items-center justify-center">
+          <span className="flex items-center justify-center text-blue-600">
             <LogOut size={20} />
           </span>
           <AnimatePresence>
