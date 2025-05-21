@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Package, Plus, Search, Edit, Trash2, Save, X } from 'lucide-react';
@@ -36,8 +35,9 @@ const ProductManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
-  // Форма нового продукта
+  // Add id to the new product form
   const [newProduct, setNewProduct] = useState({
+    id: '',  // Add ID field
     name: '',
     articleNumber: '',
     price: 0,
@@ -75,6 +75,7 @@ const ProductManagement = () => {
   const handleCloseAddDialog = () => {
     setIsAddDialogOpen(false);
     setNewProduct({
+      id: '',  // Add ID field
       name: '',
       articleNumber: '',
       price: 0,
@@ -122,8 +123,14 @@ const ProductManagement = () => {
       return;
     }
     
+    // Generate a random ID for the new product
+    const productWithId = {
+      ...newProduct,
+      id: Math.random().toString(36).substring(2, 11) // Generate a random ID
+    };
+    
     // Добавление нового продукта
-    addNewEquipment(newProduct);
+    addNewEquipment(productWithId);
     handleCloseAddDialog();
   };
   

@@ -71,8 +71,8 @@ interface OrderContextType {
   getOrderById: (id: string) => Order | undefined;
   updateOrderStatus: (id: string, status: OrderStatus) => void;
   getAllEquipment: () => EquipmentPart[];
-  getEquipmentByArticle?: (articleNumber: string) => EquipmentPart | undefined;
-  updateEquipmentInventory?: (articleNumber: string, quantity: number) => void;
+  getEquipmentByArticle: (articleNumber: string) => EquipmentPart | undefined;
+  updateEquipmentInventory: (articleNumber: string, quantity: number) => void;
   createCommercialProposal: (
     orderId: string,
     equipment: EquipmentPart[],
@@ -82,14 +82,13 @@ interface OrderContextType {
   ) => void;
   toggleProposalPrices: (orderId: string, showPrices: boolean) => void;
   downloadProposalAsWord: (proposalId: string) => void;
-  // Add the missing methods
   createOrder: (orderData: { clientName: string, description: string, responsibleEmployee?: string }) => void;
   loading: boolean;
   getEmployeeList: () => string[];
   getOrdersByStatus: (statuses: OrderStatus[]) => Order[];
   getNeededPurchaseItems: () => PurchaseItem[];
   filteredOrders?: Order[];
-  addNewEquipment?: (newEquipment: EquipmentPart) => void;
+  addNewEquipment: (newEquipment: EquipmentPart) => void;
 }
 
 // Create the context
@@ -667,7 +666,8 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         getEmployeeList,
         getOrdersByStatus,
         getNeededPurchaseItems,
-        addNewEquipment
+        addNewEquipment,
+        filteredOrders: orders // Added this to provide filteredOrders
       }}
     >
       {children}

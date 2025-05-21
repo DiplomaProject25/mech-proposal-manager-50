@@ -13,24 +13,30 @@ import StatusBadge from '@/components/common/StatusBadge';
 
 const ConstructorDashboard = () => {
   const { user } = useAuth();
-  const { filteredOrders, updateOrderStatus } = useOrders();
+  const { orders, updateOrderStatus } = useOrders();
   const navigate = useNavigate();
   const { toast } = useToast();
   
   // Orders ready for development (not yet assigned)
-  const availableOrders = filteredOrders.filter(
+  const availableOrders = orders.filter(
     order => order.status === OrderStatus.READY_FOR_DEVELOPMENT && !order.assignedTo
   );
   
   // Orders assigned to the current constructor
-  const myOrders = filteredOrders.filter(
+  const myOrders = orders.filter(
     order => order.assignedTo === user?.id
   );
   
   const handleTakeOrder = (orderId: string) => {
     if (!user) return;
     
-    updateOrderStatus(orderId, OrderStatus.IN_PROGRESS, user.id);
+    // Update the order status AND assign it to the current user
+    const updatedOrder = {
+      ...orders.find(order => order.id === orderId)!,
+      status: OrderStatus.IN_PROGRESS,
+      assignedTo: user.id
+    };
+    updateOrderStatus(orderId, OrderStatus.IN_PROGRESS);
     
     toast({
       title: 'Order Assigned',

@@ -100,10 +100,11 @@ const EquipmentDetails = () => {
       return;
     }
     
-    const equipmentIds = partsInfo.map(info => info.part.id);
-    const quantities = partsInfo.map(info => info.part.quantity);
+    // Update each part's inventory individually
+    partsInfo.forEach(info => {
+      updateEquipmentInventory(info.part.articleNumber, info.part.quantity);
+    });
     
-    updateEquipmentInventory(equipmentIds, quantities);
     updateOrderStatus(orderId, OrderStatus.ASSEMBLY);
     
     toast({
