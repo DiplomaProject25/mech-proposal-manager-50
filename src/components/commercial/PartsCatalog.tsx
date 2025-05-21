@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useOrders, EquipmentPart } from '@/context/OrderContext';  // Import from OrderContext
+import { useOrders, EquipmentPart } from '@/context/OrderContext';
 
 export const PartsCatalog = ({
   isOpen,

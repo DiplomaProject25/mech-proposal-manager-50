@@ -16,8 +16,13 @@ const Dashboard = () => {
     const translatedStatus = {
       'NEW': 'Новый',
       'PENDING': 'В ожидании',
+      'PROPOSAL_CREATED': 'Предложение создано',
       'READY_FOR_DEVELOPMENT': 'Готов к разработке',
       'IN_PROGRESS': 'В работе',
+      'NEED_PURCHASING': 'Необходима закупка',
+      'PURCHASING': 'Происходит закупка',
+      'IN_TRANSIT': 'В пути',
+      'UNLOADING': 'Разгрузка',
       'ASSEMBLY': 'Сборка',
       'COMPLETED': 'Завершен',
       'REJECTED': 'Отклонен'

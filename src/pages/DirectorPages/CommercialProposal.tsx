@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -34,6 +33,7 @@ const CommercialProposal = () => {
     selectedParts: [],
     totalCost: 0,
   });
+
   const [showPartsCatalog, setShowPartsCatalog] = useState(false);
 
   const order = orderId ? getOrderById(orderId) : null;
@@ -194,21 +194,29 @@ const CommercialProposal = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="tax">НДС (%)</Label>
-                    <Input
-                      id="tax"
-                      name="tax"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={form.tax}
-                      onChange={handleNumberInputChange}
-                    />
-                  </div>
-                  
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                
+                if (form.selectedParts.length === 0) {
+                  toast({
+                    title: "Ошибка",
+                    description: "Добавьте хотя бы одну деталь в предложение",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                
+                createCommercialProposal(
+                  form.orderId,
+                  form.selectedParts,
+                  form.markup,
+                  '',
+                  10
+                );
+                
+                navigate(`/orders/${form.orderId}`);
+              }} className="space-y-6">
+                <div className="grid grid-cols-1 gap-6">
                   <div>
                     <Label htmlFor="markup">Наценка (%)</Label>
                     <Input
@@ -218,7 +226,10 @@ const CommercialProposal = () => {
                       min="0"
                       max="200"
                       value={form.markup}
-                      onChange={handleNumberInputChange}
+                      onChange={(e) => {
+                        const { name, value } = e.target;
+                        setForm(prevForm => ({ ...prevForm, [name]: parseFloat(value) || 0 }));
+                      }}
                     />
                   </div>
                 </div>
@@ -266,7 +277,14 @@ const CommercialProposal = () => {
                                   type="number"
                                   min="1"
                                   value={part.quantity}
-                                  onChange={(e) => handleQuantityChange(part.articleNumber, parseInt(e.target.value) || 1)}
+                                  onChange={(e) => {
+                                    setForm(prevForm => ({
+                                      ...prevForm,
+                                      selectedParts: prevForm.selectedParts.map(p => 
+                                        p.articleNumber === part.articleNumber ? { ...p, quantity: parseInt(e.target.value) || 1 } : p
+                                      )
+                                    }));
+                                  }}
                                   className="w-20"
                                 />
                               </TableCell>
@@ -277,7 +295,14 @@ const CommercialProposal = () => {
                                   <Input
                                     placeholder="7-10 дней"
                                     value={part.deliveryTime || ''}
-                                    onChange={(e) => handleDeliveryTimeChange(part.articleNumber, e.target.value)}
+                                    onChange={(e) => {
+                                      setForm(prevForm => ({
+                                        ...prevForm,
+                                        selectedParts: prevForm.selectedParts.map(p => 
+                                          p.articleNumber === part.articleNumber ? { ...p, deliveryTime: e.target.value } : p
+                                        )
+                                      }));
+                                    }}
                                     className="w-28"
                                   />
                                 </div>
@@ -288,7 +313,12 @@ const CommercialProposal = () => {
                                   type="button"
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleRemovePart(part.articleNumber)}
+                                  onClick={() => {
+                                    setForm(prevForm => ({
+                                      ...prevForm,
+                                      selectedParts: prevForm.selectedParts.filter(p => p.articleNumber !== part.articleNumber)
+                                    }));
+                                  }}
                                 >
                                   <Trash className="h-4 w-4 text-red-500" />
                                 </Button>
@@ -304,7 +334,32 @@ const CommercialProposal = () => {
                 <div className="flex justify-between items-start">
                   <Button 
                     type="button" 
-                    onClick={calculateTotal}
+                    onClick={() => {
+                      // Calculate subtotal of parts
+                      const subtotal = form.selectedParts.reduce(
+                        (total, item) => total + (item.price * item.quantity), 
+                        0
+                      );
+                      
+                      // Apply markup
+                      const markupAmount = subtotal * (form.markup / 100);
+                      
+                      // Calculate tax
+                      const taxAmount = (subtotal + markupAmount) * (form.tax / 100);
+                      
+                      // Final total
+                      const total = subtotal + markupAmount + taxAmount;
+                      
+                      setForm(prevForm => ({
+                        ...prevForm,
+                        totalCost: total
+                      }));
+                      
+                      toast({
+                        title: "Расчет выполнен",
+                        description: `Итоговая стоимость: $${total.toFixed(2)}`,
+                      });
+                    }}
                     className="flex items-center"
                     disabled={form.selectedParts.length === 0}
                   >
@@ -349,7 +404,13 @@ const CommercialProposal = () => {
         <PartsCatalog
           isOpen={showPartsCatalog} 
           onClose={() => setShowPartsCatalog(false)}
-          onSelect={handlePartSelect}
+          onSelect={(parts) => {
+            setForm(prevForm => ({
+              ...prevForm,
+              selectedParts: [...parts]
+            }));
+            setShowPartsCatalog(false);
+          }}
           initialSelection={form.selectedParts}
         />
       )}

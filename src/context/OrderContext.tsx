@@ -1,4 +1,396 @@
 
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { useToast } from '@/hooks/use-toast';
+
+// Define the order status enum
+export enum OrderStatus {
+  NEW = 'NEW',
+  PENDING = 'PENDING',
+  PROPOSAL_CREATED = 'PROPOSAL_CREATED',
+  READY_FOR_DEVELOPMENT = 'READY_FOR_DEVELOPMENT',
+  IN_PROGRESS = 'IN_PROGRESS',
+  NEED_PURCHASING = 'NEED_PURCHASING',
+  PURCHASING = 'PURCHASING',
+  IN_TRANSIT = 'IN_TRANSIT',
+  UNLOADING = 'UNLOADING',
+  ASSEMBLY = 'ASSEMBLY',
+  COMPLETED = 'COMPLETED',
+  REJECTED = 'REJECTED'
+}
+
+// Define the equipment part interface
+export interface EquipmentPart {
+  id: string;
+  name: string;
+  articleNumber: string;
+  price: number;
+  quantity: number;
+  availableQuantity: number;
+  location: string;
+  deliveryTime?: string;
+  description?: string;
+}
+
+// Define the commercial proposal interface
+export interface CommercialProposal {
+  id: string;
+  orderId: string;
+  equipment: EquipmentPart[];
+  markup: number;
+  companyMarkup?: number;
+  responsibleEmployee?: string;
+  totalCost: number;
+  createdAt: Date;
+  showPrices: boolean;
+}
+
+// Define the order interface
+export interface Order {
+  id: string;
+  clientName: string;
+  status: OrderStatus;
+  description: string;
+  responsibleEmployee?: string;
+  assignedTo?: string;
+  commercialProposal?: CommercialProposal;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Define the context type
+interface OrderContextType {
+  orders: Order[];
+  addOrder: (clientName: string, description: string) => Order;
+  getOrderById: (id: string) => Order | undefined;
+  updateOrderStatus: (id: string, status: OrderStatus) => void;
+  getAllEquipment: () => EquipmentPart[];
+  createCommercialProposal: (
+    orderId: string,
+    equipment: EquipmentPart[],
+    markup: number,
+    responsibleEmployee?: string,
+    companyMarkup?: number
+  ) => void;
+  toggleProposalPrices: (orderId: string, showPrices: boolean) => void;
+  downloadProposalAsWord: (proposalId: string) => void;
+}
+
+// Create the context
+const OrderContext = createContext<OrderContextType | undefined>(undefined);
+
+// Mock equipment data
+const MOCK_EQUIPMENT: EquipmentPart[] = [
+  {
+    id: '1',
+    name: 'Контроллер Arduino Mega',
+    articleNumber: 'ARD-M2560',
+    price: 45.99,
+    quantity: 1,
+    availableQuantity: 15,
+    location: 'Склад A3-25',
+    description: 'Микроконтроллер ATmega2560'
+  },
+  {
+    id: '2',
+    name: 'Сервопривод высокой мощности',
+    articleNumber: 'SRV-180HP',
+    price: 29.99,
+    quantity: 1,
+    availableQuantity: 8,
+    location: 'Склад A4-12',
+    description: '180 градусов поворота, высокий крутящий момент'
+  },
+  {
+    id: '3',
+    name: 'Датчик температуры DS18B20',
+    articleNumber: 'DS18B20',
+    price: 4.50,
+    quantity: 1,
+    availableQuantity: 35,
+    location: 'Склад B2-05',
+    description: 'Цифровой датчик температуры, водонепроницаемый'
+  },
+  {
+    id: '4',
+    name: 'Плата расширения для Arduino',
+    articleNumber: 'ARD-SHD-V5',
+    price: 12.99,
+    quantity: 1,
+    availableQuantity: 10,
+    location: 'Склад A3-26',
+    description: 'Плата расширения для подключения различных модулей'
+  },
+  {
+    id: '5',
+    name: 'LCD Дисплей 16x2 с I2C',
+    articleNumber: 'LCD-16X2-I2C',
+    price: 8.99,
+    quantity: 1,
+    availableQuantity: 22,
+    location: 'Склад B4-18',
+    description: 'ЖК-дисплей с интерфейсом I2C'
+  },
+  {
+    id: '6',
+    name: 'Шаговый двигатель Nema 17',
+    articleNumber: 'NEMA17-42',
+    price: 15.99,
+    quantity: 1,
+    availableQuantity: 14,
+    location: 'Склад A5-07',
+    description: '42mm шаговый двигатель для точного позиционирования'
+  },
+  {
+    id: '7',
+    name: 'Драйвер шагового двигателя A4988',
+    articleNumber: 'DRV-A4988',
+    price: 5.99,
+    quantity: 1,
+    availableQuantity: 25,
+    location: 'Склад A5-08',
+    description: 'Драйвер для управления шаговыми двигателями'
+  },
+  {
+    id: '8',
+    name: 'Ультразвуковой датчик HC-SR04',
+    articleNumber: 'HC-SR04',
+    price: 3.99,
+    quantity: 1,
+    availableQuantity: 40,
+    location: 'Склад B2-06',
+    description: 'Датчик для измерения расстояния'
+  },
+  {
+    id: '9',
+    name: 'Модуль Bluetooth HC-05',
+    articleNumber: 'HC-05-BT',
+    price: 6.99,
+    quantity: 1,
+    availableQuantity: 18,
+    location: 'Склад B3-14',
+    description: 'Модуль беспроводной связи Bluetooth'
+  },
+  {
+    id: '10',
+    name: 'RGB-светодиод WS2812B (лента 1м)',
+    articleNumber: 'WS2812B-1M',
+    price: 18.99,
+    quantity: 1,
+    availableQuantity: 12,
+    location: 'Склад B1-22',
+    description: 'Адресуемая светодиодная лента'
+  }
+];
+
+// Mock orders data
+const MOCK_ORDERS: Order[] = [
+  {
+    id: '1',
+    clientName: 'ООО "ТехИнновации"',
+    status: OrderStatus.NEW,
+    description: 'Система автоматизации производственной линии с контролем температуры и влажности. Требуется разработать и изготовить прототип для тестирования.',
+    createdAt: new Date('2025-05-10'),
+    updatedAt: new Date('2025-05-10')
+  },
+  {
+    id: '2',
+    clientName: 'АО "ЭнергоРешения"',
+    status: OrderStatus.READY_FOR_DEVELOPMENT,
+    description: 'Модульная система мониторинга энергопотребления для промышленных объектов. Необходимо интегрировать с существующей инфраструктурой заказчика.',
+    responsibleEmployee: 'Иванов И.И.',
+    assignedTo: '2',
+    createdAt: new Date('2025-05-05'),
+    updatedAt: new Date('2025-05-12')
+  },
+  {
+    id: '3',
+    clientName: 'ЗАО "АгроТех"',
+    status: OrderStatus.PROPOSAL_CREATED,
+    description: 'Автоматическая система полива для тепличного комплекса с датчиками влажности почвы и воздуха. Требуется интеграция с метеостанцией.',
+    responsibleEmployee: 'Петров П.П.',
+    commercialProposal: {
+      id: '1',
+      orderId: '3',
+      equipment: [
+        {
+          ...MOCK_EQUIPMENT[0],
+          quantity: 2,
+          deliveryTime: '10-14 дней'
+        },
+        {
+          ...MOCK_EQUIPMENT[2],
+          quantity: 15,
+          deliveryTime: '7-10 дней'
+        },
+        {
+          ...MOCK_EQUIPMENT[7],
+          quantity: 5,
+          deliveryTime: '5-7 дней'
+        }
+      ],
+      markup: 15,
+      companyMarkup: 10,
+      totalCost: 298.75,
+      createdAt: new Date('2025-05-14'),
+      showPrices: false
+    },
+    createdAt: new Date('2025-05-08'),
+    updatedAt: new Date('2025-05-14')
+  },
+  {
+    id: '4',
+    clientName: 'ИП Смирнов А.В.',
+    status: OrderStatus.IN_PROGRESS,
+    description: 'Система контроля доступа с распознаванием лиц для офисного помещения. Требуется разработать программное обеспечение и подобрать оборудование.',
+    responsibleEmployee: 'Сидоров С.С.',
+    assignedTo: '2',
+    createdAt: new Date('2025-04-28'),
+    updatedAt: new Date('2025-05-08')
+  },
+  {
+    id: '5',
+    clientName: 'ООО "МедТехника"',
+    status: OrderStatus.COMPLETED,
+    description: 'Прототип медицинского устройства для дистанционного мониторинга пациентов. Требуется обеспечить надежность и точность измерений.',
+    responsibleEmployee: 'Иванов И.И.',
+    createdAt: new Date('2025-04-15'),
+    updatedAt: new Date('2025-05-10')
+  },
+  {
+    id: '6',
+    clientName: 'ООО "СтройКонтроль"',
+    status: OrderStatus.REJECTED,
+    description: 'Система мониторинга состояния строительных конструкций. Требуется разработать компактные датчики и систему сбора данных.',
+    createdAt: new Date('2025-05-02'),
+    updatedAt: new Date('2025-05-06')
+  },
+  {
+    id: '7',
+    clientName: 'ЗАО "ТранспортЛогистика"',
+    status: OrderStatus.NEED_PURCHASING,
+    description: 'Система мониторинга состояния грузов при транспортировке. Необходимы датчики температуры, влажности и ускорения.',
+    responsibleEmployee: 'Петров П.П.',
+    assignedTo: '2',
+    createdAt: new Date('2025-04-25'),
+    updatedAt: new Date('2025-05-12')
+  }
+];
+
+// OrderProvider component
+export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
+
+  // Add a new order
+  const addOrder = (clientName: string, description: string): Order => {
+    const newOrder: Order = {
+      id: (orders.length + 1).toString(),
+      clientName,
+      status: OrderStatus.NEW,
+      description,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    setOrders(prevOrders => [...prevOrders, newOrder]);
+    return newOrder;
+  };
+
+  // Get order by ID
+  const getOrderById = (id: string): Order | undefined => {
+    return orders.find(order => order.id === id);
+  };
+
+  // Update order status
+  const updateOrderStatus = (id: string, status: OrderStatus): void => {
+    setOrders(prevOrders =>
+      prevOrders.map(order =>
+        order.id === id
+          ? { ...order, status, updatedAt: new Date() }
+          : order
+      )
+    );
+    
+    toast({
+      title: 'Статус обновлен',
+      description: `Заказ №${id} теперь в статусе: ${status}`,
+    });
+  };
+
+  // Get all equipment
+  const getAllEquipment = (): EquipmentPart[] => {
+    return MOCK_EQUIPMENT;
+  };
+
+  // Create a commercial proposal
+  const createCommercialProposal = (
+    orderId: string,
+    equipment: EquipmentPart[],
+    markup: number,
+    responsibleEmployee?: string,
+    companyMarkup?: number
+  ): void => {
+    // Calculate total cost
+    let subtotal = 0;
+    equipment.forEach(item => {
+      subtotal += item.price * item.quantity;
+    });
+    
+    const markupAmount = subtotal * (markup / 100);
+    const companyMarkupAmount = companyMarkup ? subtotal * (companyMarkup / 100) : 0;
+    const taxAmount = (subtotal + markupAmount + companyMarkupAmount) * 0.2;
+    const totalCost = subtotal + markupAmount + companyMarkupAmount + taxAmount;
+    
+    const proposal: CommercialProposal = {
+      id: `CP-${orderId}`,
+      orderId,
+      equipment,
+      markup,
+      companyMarkup,
+      responsibleEmployee,
+      totalCost,
+      createdAt: new Date(),
+      showPrices: false
+    };
+    
+    setOrders(prevOrders =>
+      prevOrders.map(order =>
+        order.id === orderId
+          ? { 
+              ...order, 
+              commercialProposal: proposal,
+              status: OrderStatus.PROPOSAL_CREATED,
+              updatedAt: new Date()
+            }
+          : order
+      )
+    );
+    
+    toast({
+      title: 'Предложение создано',
+      description: `Коммерческое предложение для заказа №${orderId} создано`,
+    });
+  };
+
+  // Toggle proposal prices visibility
+  const toggleProposalPrices = (orderId: string, showPrices: boolean): void => {
+    setOrders(prevOrders =>
+      prevOrders.map(order =>
+        order.id === orderId && order.commercialProposal
+          ? { 
+              ...order, 
+              commercialProposal: {
+                ...order.commercialProposal,
+                showPrices
+              },
+              updatedAt: new Date()
+            }
+          : order
+      )
+    );
+  };
+
   // Update downloadProposalAsWord to include delivery times
   const downloadProposalAsWord = (proposalId: string) => {
     try {
@@ -141,3 +533,30 @@
       });
     }
   };
+
+  return (
+    <OrderContext.Provider
+      value={{
+        orders,
+        addOrder,
+        getOrderById,
+        updateOrderStatus,
+        getAllEquipment,
+        createCommercialProposal,
+        toggleProposalPrices,
+        downloadProposalAsWord
+      }}
+    >
+      {children}
+    </OrderContext.Provider>
+  );
+};
+
+// Custom hook to use the order context
+export const useOrders = () => {
+  const context = useContext(OrderContext);
+  if (context === undefined) {
+    throw new Error('useOrders must be used within an OrderProvider');
+  }
+  return context;
+};
